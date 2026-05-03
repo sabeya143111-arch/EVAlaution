@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>اختبار: ما مدى جودة مهاراتك الإدارية؟</title>
+  <style>
+    body{font-family:Tahoma,Arial,sans-serif;background:#f5f6f8;margin:0;color:#1f2933;line-height:1.8}
+    .wrap{max-width:980px;margin:30px auto;padding:18px}
+    .card{background:white;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:26px;margin-bottom:18px}
+    h1{text-align:center;margin:0 0 10px;font-size:30px}
+    .hint{background:#eef4ff;border-right:5px solid #2f6fed;padding:12px 16px;border-radius:12px;margin:14px 0}
+    .q{border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin:13px 0;background:#fff}
+    .q-title{font-weight:700;margin-bottom:8px}
+    .options{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    label{border:1px solid #d9dee7;border-radius:10px;padding:8px;text-align:center;cursor:pointer;background:#fafafa}
+    input{margin-left:6px}
+    label:hover{background:#edf5ff}
+    button{width:100%;border:0;border-radius:14px;padding:15px;font-size:20px;font-weight:700;cursor:pointer;background:#111827;color:white;margin-top:12px}
+    button:hover{background:#374151}
+    .result{display:none;border-radius:16px;padding:18px;margin-top:18px;font-size:20px;font-weight:700}
+    .low{background:#fee2e2;color:#991b1b}
+    .mid{background:#fef3c7;color:#92400e}
+    .high{background:#dcfce7;color:#166534}
+    .small{font-size:14px;color:#5b6575}
+    .missing{background:#fff7ed;border:1px solid #fb923c;padding:10px;border-radius:10px;display:none;margin-top:10px;color:#9a3412}
+    @media(max-width:700px){.options{grid-template-columns:1fr}.wrap{margin:10px auto;padding:10px}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>اختبار: ما مدى جودة مهاراتك الإدارية؟</h1>
+    <div class="hint">
+      اختر الإجابة الأقرب لسلوكك الحقيقي. في النهاية ستظهر لك النتيجة تلقائيًا.
+      <br><b>التقييم:</b> أبدًا = 1، نادرًا = 2، أحيانًا = 3، كثيرًا = 4، دائمًا = 5.
+    </div>
+    <p class="small">ملاحظة: بعض الأسئلة يتم احتسابها عكسيًا لأنها تكشف عادات إدارية غير فعّالة.</p>
+  </div>
+
+  <form id="quiz" class="card"></form>
+
+  <div class="card">
+    <button onclick="calculateScore()" type="button">إظهار النتيجة</button>
+    <div id="missing" class="missing">فضلاً أجب على جميع الأسئلة قبل عرض النتيجة.</div>
+    <div id="result" class="result"></div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {t:"عندما أواجه مشكلة، أحاول حلها بنفسي قبل أن أسأل رئيسي ماذا أفعل.", r:false},
+  {t:"عندما أفوض العمل، أعطيه لمن لديه أكبر وقت متاح.", r:true},
+  {t:"أتابع مع أعضاء الفريق كلما رأيت أن سلوكهم له تأثير سلبي على خدمة العملاء.", r:false},
+  {t:"أتخذ القرارات بعد التحليل الدقيق، بدلًا من الاعتماد على الحدس فقط.", r:false},
+  {t:"أترك أعضاء فريقي يكتشفون بأنفسهم أفضل السبل للعمل معًا.", r:true},
+  {t:"أنتظر قبل معاقبة أحد أعضاء الفريق، حتى يكون لديه فرصة لتصحيح سلوكياته بنفسه.", r:true},
+  {t:"المهارات الفنية هي أهم المهارات التي أحتاجها لكي أكون مديرًا فعالًا.", r:true},
+  {t:"أقضي الوقت في التحدث مع فريقي حول ما يجري بشكل جيد وما يحتاج إلى تحسين.", r:false},
+  {t:"في الاجتماعات، أقوم بدور الوسيط/الميسر عند الضرورة، وأساعد الفريق للوصول إلى فهم أفضل أو توافق في الرأي.", r:false},
+  {t:"أفهم تمامًا كيفية سير عمليات المهام في إدارتي، وأعمل على التخلص من عوائق الإنجاز.", r:false},
+  {t:"عند تكوين فريق، أضع في اعتباري المهارات التي أحتاجها ثم أبحث عن الأشخاص الأنسب.", r:false},
+  {t:"أفعل كل ما بوسعي لتجنب الصراع في فريقي.", r:true},
+  {t:"أحاول تحفيز الأشخاص داخل فريقي من خلال تكييف أسلوبي للتحفيز بما يناسب احتياجات كل فرد.", r:false},
+  {t:"عندما يرتكب فريقي خطأً فادحًا، أقوم بإطلاع مديري على ما حدث، ثم أتعامل معه كدرس مهم تعلمته.", r:false},
+  {t:"عندما يحدث تعارض داخل فريق جديد، أقبله كمرحلة حتمية في عملية تطوير الفريق.", r:false},
+  {t:"أتحدث إلى أعضاء الفريق حول أهدافهم الفردية، وأربطها بأهداف الشركة ككل.", r:false},
+  {t:"إذا كنت أقوم بتشكيل فريق، أختار الأشخاص الذين لديهم شخصيات وأعمار وخلفيات متشابهة.", r:true},
+  {t:"أعتقد أن عبارة: إذا كنت تريد عملًا جيدًا، افعله بنفسك، صحيحة.", r:true},
+  {t:"أتحدث مع أعضاء الفريق كأفراد للتأكد من أنهم سعداء ومنتجون.", r:false},
+  {t:"أبلغ أعضاء فريقي بإيجاز حتى يعرفوا ما يدور حولهم في الشركة.", r:false}
+];
+
+const opts = [
+  ["أبدًا",1],["نادرًا",2],["أحيانًا",3],["كثيرًا",4],["دائمًا",5]
+];
+
+const form = document.getElementById("quiz");
+questions.forEach((q,i)=>{
+  const div=document.createElement("div");
+  div.className="q";
+  div.innerHTML = `<div class="q-title">${i+1}. ${q.t}</div><div class="options">`+
+    opts.map(([label,val])=>`<label><input type="radio" name="q${i}" value="${val}">${label}</label>`).join("")+
+    `</div>`;
+  form.appendChild(div);
+});
+
+function calculateScore(){
+  let total=0;
+  for(let i=0;i<questions.length;i++){
+    const checked=document.querySelector(`input[name="q${i}"]:checked`);
+    if(!checked){
+      document.getElementById("missing").style.display="block";
+      document.getElementById("result").style.display="none";
+      return;
+    }
+    let v=parseInt(checked.value);
+    total += questions[i].r ? (6-v) : v;
+  }
+  document.getElementById("missing").style.display="none";
+  const res=document.getElementById("result");
+  res.style.display="block";
+  res.className="result";
+  let title="", text="";
+  if(total<=46){
+    res.classList.add("low");
+    title="تحتاج إلى تحسين عاجل";
+    text="أنت بحاجة إلى تحسين مهاراتك الإدارية بشكل عاجل. إذا كنت تريد أن تكون فعالًا في دور قيادي، ابدأ بتطوير مهارات تنظيم ومتابعة الفريق.";
+  }else if(total<=73){
+    res.classList.add("mid");
+    title="أنت في طريقك لتصبح مديرًا جيدًا";
+    text="لديك ممارسات جيدة، لكن توجد مهارات تحتاج إلى تطوير. ركّز على المجالات التي انخفضت فيها درجاتك وابدأ بخطة تحسين واضحة.";
+  }else{
+    res.classList.add("high");
+    title="أداء إداري رائع";
+    text="أنت تقوم بعمل رائع في إدارة فريقك. ركّز الآن على تحسين مهاراتك بشكل أكبر والاستفادة منها للوصول إلى أهدافك المهنية.";
+  }
+  res.innerHTML = `درجتك: ${total} من 100<br>${title}<br><span style="font-weight:400">${text}</span>`;
+}
+</script>
+</body>
+</html>
