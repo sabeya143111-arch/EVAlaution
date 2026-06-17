@@ -1,86 +1,231 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>اختبار: ما مدى جودة مهاراتك الإدارية؟</title>
-  <style>
-    body{font-family:Tahoma,Arial,sans-serif;background:#f5f6f8;margin:0;color:#1f2933;line-height:1.8}
-    .wrap{max-width:980px;margin:30px auto;padding:18px}
-    .card{background:white;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:26px;margin-bottom:18px}
-    h1{text-align:center;margin:0 0 10px;font-size:30px}
-    .hint{background:#eef4ff;border-right:5px solid #2f6fed;padding:12px 16px;border-radius:12px;margin:14px 0}
-    .q{border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin:13px 0;background:#fff}
-    .q-title{font-weight:700;margin-bottom:8px}
-    .options{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-    label.option{border:1px solid #d9dee7;border-radius:10px;padding:8px;text-align:center;cursor:pointer;background:#fafafa}
-    input[type="radio"]{margin-left:6px}
-    label.option:hover{background:#edf5ff}
-    button{width:100%;border:0;border-radius:14px;padding:15px;font-size:20px;font-weight:700;cursor:pointer;background:#111827;color:white;margin-top:12px}
-    button:hover{background:#374151}
-    .result{display:none;border-radius:16px;padding:18px;margin-top:18px;font-size:20px;font-weight:700}
-    .low{background:#fee2e2;color:#991b1b}
-    .mid{background:#fef3c7;color:#92400e}
-    .high{background:#dcfce7;color:#166534}
-    .small{font-size:14px;color:#5b6575}
-    .missing{background:#fff7ed;border:1px solid #fb923c;padding:10px;border-radius:10px;display:none;margin-top:10px;color:#9a3412}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .field label{display:block;font-weight:700;margin-bottom:6px}
-    .field input{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:12px;font:inherit}
-    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:14px 28px;border-radius:16px;font-weight:700;font-size:15px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
-    .toast.show{opacity:1}
-    .toast.success{background:#16a34a}
-    .toast.error{background:#dc2626}
-    @media(max-width:700px){
-      .options{grid-template-columns:1fr}
-      .grid{grid-template-columns:1fr}
-      .wrap{margin:10px auto;padding:10px}
-      h1{font-size:24px}
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>تقييم المهارات الإدارية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --txt:#eceaf6; --muted:#a8a3c9;
+    --v:#7c5cff; --m:#ff4d9d; --c:#33e0ff; --gold:#f2b94e;
+    --low:#ff5b6e; --mid:#f2b94e; --high:#34d399;
+    --glass:rgba(255,255,255,.055);
+    --glass-brd:rgba(255,255,255,.14);
+    --grad:linear-gradient(135deg,#7c5cff 0%,#b14bff 50%,#ff4d9d 100%);
+    --rx:0deg; --ry:0deg; --px:0px; --py:0px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;overflow-x:hidden}
+  body{
+    font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;
+    color:var(--txt);
+    background:#070611;
+    min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== Depth background ===== */
+  .bgwrap{position:fixed;inset:-12%;z-index:0;pointer-events:none;transform:translate(var(--px),var(--py));transition:transform .25s ease-out}
+  .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+  .orb.a{width:46vw;height:46vw;left:-8vw;top:-6vh;background:radial-gradient(circle,#6b3cff,transparent 70%)}
+  .orb.b{width:42vw;height:42vw;right:-10vw;top:18vh;background:radial-gradient(circle,#ff3d97,transparent 70%);transform:translate(calc(var(--px) * -1.6),calc(var(--py) * -1.6))}
+  .orb.c{width:36vw;height:36vw;left:24vw;bottom:-14vh;background:radial-gradient(circle,#1fb6ff,transparent 70%);transform:translate(calc(var(--px) * 1.3),calc(var(--py) * 1.3))}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;background-image:radial-gradient(rgba(255,255,255,.7) 1px,transparent 1px);background-size:3px 3px}
+
+  /* ===== Scene / 3D ===== */
+  .scene{position:relative;z-index:2;perspective:1300px;max-width:680px;margin:0 auto;padding:clamp(16px,4vw,40px) 18px 70px;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
+
+  .brand{display:flex;align-items:center;gap:13px;justify-content:center;margin-bottom:22px;perspective:500px}
+  .cube{width:36px;height:36px;position:relative;transform-style:preserve-3d;animation:cubespin 9s linear infinite}
+  @keyframes cubespin{from{transform:rotateX(-22deg) rotateY(0)}to{transform:rotateX(-22deg) rotateY(360deg)}}
+  .cube i{position:absolute;inset:0;border-radius:8px;background:var(--grad);box-shadow:inset 0 0 14px rgba(255,255,255,.35)}
+  .cube i:nth-child(1){transform:translateZ(18px)}
+  .cube i:nth-child(2){transform:rotateY(180deg) translateZ(18px);opacity:.85}
+  .cube i:nth-child(3){transform:rotateY(90deg) translateZ(18px);opacity:.9}
+  .cube i:nth-child(4){transform:rotateY(-90deg) translateZ(18px);opacity:.9}
+  .cube i:nth-child(5){transform:rotateX(90deg) translateZ(18px);opacity:.95}
+  .cube i:nth-child(6){transform:rotateX(-90deg) translateZ(18px);opacity:.95}
+  .brand b{font-family:"Cairo";font-weight:800;letter-spacing:.5px;font-size:15px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .deckwrap{transform-style:preserve-3d;animation:flyIn .8s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes flyIn{from{opacity:0;transform:translateZ(-280px) rotateX(20deg)}to{opacity:1;transform:none}}
+
+  .deck{
+    transform-style:preserve-3d;
+    transform:rotateX(var(--rx)) rotateY(var(--ry));
+    transition:transform .25s ease-out;
+    background:var(--glass);
+    border:1px solid var(--glass-brd);
+    border-radius:28px;
+    padding:clamp(22px,5vw,40px);
+    -webkit-backdrop-filter:blur(20px) saturate(140%);
+    backdrop-filter:blur(20px) saturate(140%);
+    box-shadow:0 40px 90px -40px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.16);
+    position:relative;
+  }
+
+  .screen{display:none}
+  .screen.active{display:block;animation:rise .5s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .eyebrow{font-family:"Cairo";font-weight:700;font-size:12.5px;letter-spacing:2.5px;color:var(--m);margin:0 0 10px}
+  h1{font-family:"Cairo";font-weight:900;font-size:clamp(27px,6.6vw,40px);line-height:1.22;margin:0 0 12px;text-shadow:0 2px 30px rgba(124,92,255,.35)}
+  .lede{color:var(--muted);margin:0 0 22px;font-size:15.5px;line-height:1.75}
+
+  .legend{display:flex;gap:6px;flex-wrap:wrap;background:rgba(255,255,255,.04);border:1px solid var(--glass-brd);border-radius:16px;padding:12px 14px;margin-bottom:22px;font-size:12.5px;color:var(--muted);align-items:center}
+  .legend b{color:var(--txt);font-weight:600}
+  .legend span{background:rgba(255,255,255,.06);border:1px solid var(--glass-brd);border-radius:999px;padding:3px 11px}
+
+  .fields{display:grid;gap:14px}
+  .field label{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
+  .field input{width:100%;padding:13px 15px;border:1.5px solid var(--glass-brd);border-radius:14px;font:inherit;background:rgba(255,255,255,.05);color:var(--txt);transition:.2s}
+  .field input::placeholder{color:#7d799c}
+  .field input:focus{outline:none;border-color:var(--v);box-shadow:0 0 0 4px rgba(124,92,255,.22)}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:16px;padding:16px;font-family:"Cairo";font-weight:800;font-size:18px;cursor:pointer;color:#fff;background:var(--grad);box-shadow:0 18px 40px -14px rgba(124,92,255,.85),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .15s,box-shadow .15s,opacity .2s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:active{transform:translateY(0)}
+  .btn:disabled{opacity:.55;cursor:default;transform:none}
+  .btn.ghost{background:rgba(255,255,255,.06);color:var(--txt);border:1.5px solid var(--glass-brd);box-shadow:none;font-size:14.5px;padding:11px 16px;width:auto;font-weight:700}
+  .btn.ghost:hover{transform:none;background:rgba(255,255,255,.12)}
+  .mt{margin-top:22px}
+
+  .inline-msg{display:none;background:rgba(255,91,110,.12);border:1px solid rgba(255,91,110,.5);color:#ff9aa6;border-radius:12px;padding:11px 14px;font-size:13.5px;margin-top:14px}
+  .shake{animation:shake .42s}
+  @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+
+  /* ===== Quiz ===== */
+  .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .qcount{font-family:"Cairo";font-weight:700;font-size:13.5px;color:var(--muted)}
+  .qcount b{color:#fff;font-size:21px}
+  .bar{height:9px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:28px}
+  .bar>i{display:block;height:100%;width:0;border-radius:999px;background:var(--grad);box-shadow:0 0 14px rgba(255,77,157,.7);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+
+  .qbody{min-height:120px;transform-style:preserve-3d}
+  .qbody.flip{animation:flip3d .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes flip3d{from{opacity:0;transform:rotateY(40deg) translateZ(-50px)}to{opacity:1;transform:none}}
+  .qtext{font-family:"Cairo";font-weight:700;font-size:clamp(19px,4.7vw,25px);line-height:1.5;margin:0 0 24px}
+
+  .options{display:grid;gap:11px;transform-style:preserve-3d}
+  .opt{display:flex;align-items:center;gap:13px;border:1.5px solid var(--glass-brd);background:rgba(255,255,255,.05);border-radius:15px;padding:14px 16px;cursor:pointer;font-size:16px;font-weight:500;text-align:right;color:var(--txt);transform:translateZ(0);transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+  .opt:hover{transform:translateZ(26px);border-color:rgba(124,92,255,.6);background:rgba(124,92,255,.12);box-shadow:0 16px 30px -14px rgba(124,92,255,.8)}
+  .opt:active{transform:translateZ(8px)}
+  .opt .tick{width:24px;height:24px;border-radius:50%;border:2px solid #5b5780;display:grid;place-items:center;flex:0 0 auto;transition:.18s}
+  .opt .tick svg{width:13px;height:13px;opacity:0;transform:scale(.4);transition:.18s;stroke:#fff}
+  .opt .num{font-family:"Cairo";font-weight:700;color:var(--muted);font-size:13px;margin-inline-start:auto;background:rgba(255,255,255,.06);border:1px solid var(--glass-brd);border-radius:8px;padding:2px 9px;min-width:26px;text-align:center}
+  .opt.sel{border-color:var(--v);background:rgba(124,92,255,.22);transform:translateZ(20px);box-shadow:0 16px 34px -14px rgba(124,92,255,.9)}
+  .opt.sel .tick{background:var(--v);border-color:var(--v)}
+  .opt.sel .tick svg{opacity:1;transform:none}
+  .opt.sel .num{background:var(--v);color:#fff;border-color:var(--v)}
+
+  .qfoot{display:flex;justify-content:flex-start;margin-top:24px}
+
+  /* ===== Result ===== */
+  .result{text-align:center}
+  .meta{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .meta b{color:#fff;font-weight:600}
+  .gauge{position:relative;width:230px;height:230px;margin:6px auto 6px;transform-style:preserve-3d;animation:bob 4s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateZ(0)}50%{transform:translateZ(34px)}}
+  .gauge svg{transform:rotate(-90deg)}
+  .gauge .track{fill:none;stroke:rgba(255,255,255,.09);stroke-width:16}
+  .gauge .prog{fill:none;stroke-width:16;stroke-linecap:round;filter:drop-shadow(0 0 10px currentColor);transition:stroke-dashoffset 1.5s cubic-bezier(.2,.8,.2,1),stroke .4s}
+  .gauge .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .gauge .score{font-family:"Cairo";font-weight:900;font-size:62px;line-height:1;text-shadow:0 4px 24px rgba(124,92,255,.6)}
+  .gauge .outof{font-size:13px;color:var(--muted);margin-top:2px}
+  .badge{display:inline-block;font-family:"Cairo";font-weight:700;font-size:13px;padding:7px 17px;border-radius:999px;margin:6px 0 12px;animation:pop .5s 1s both}
+  @keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+  .rtitle{font-family:"Cairo";font-weight:900;font-size:clamp(22px,5.6vw,30px);margin:2px 0 10px}
+  .rtext{color:var(--muted);font-size:15.5px;line-height:1.8;max-width:46ch;margin:0 auto 8px}
+  .save-state{font-size:13px;color:var(--muted);margin-top:16px;min-height:20px}
+  .save-state.ok{color:var(--high)}
+  .save-state.err{color:var(--low)}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:var(--v);border-radius:50%;animation:rot .7s linear infinite;vertical-align:-2px;margin-inline-end:6px}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  .confetti{position:fixed;top:-14px;width:9px;height:15px;z-index:60;pointer-events:none;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(108dvh) rotate(720deg);opacity:.9}}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+    .deck,.bgwrap{transform:none !important}
+  }
+</style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h1>اختبار: ما مدى جودة مهاراتك الإدارية؟</h1>
-    <div class="hint">
-      اختر الإجابة الأقرب لسلوكك الحقيقي. في النهاية ستظهر لك النتيجة تلقائيًا.
-      <br><b>التقييم:</b> أبدًا = 1، نادرًا = 2، أحيانًا = 3، كثيرًا = 4، دائمًا = 5.
-    </div>
-    <p class="small">ملاحظة: بعض الأسئلة يتم احتسابها عكسيًا لأنها تكشف عادات إدارية غير فعّالة.</p>
+<div class="bgwrap"><span class="orb a"></span><span class="orb b"></span><span class="orb c"></span></div>
+<div class="grain"></div>
+
+<div class="scene">
+  <div class="brand">
+    <div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <b>SWAG · تقييم القيادة</b>
   </div>
 
-  <div class="card">
-    <div class="grid">
-      <div class="field">
-        <label>اسم الموظف</label>
-        <input id="employeeName" placeholder="اكتب الاسم">
+  <div class="deckwrap">
+  <div class="deck" id="deck">
+
+    <!-- INTRO -->
+    <section class="screen active" id="screen-intro">
+      <p class="eyebrow">تقييم ذاتي · ٢٠ سؤالًا</p>
+      <h1>ما مدى جودة مهاراتك الإدارية؟</h1>
+      <p class="lede">أجب بصدق بناءً على سلوكك الفعلي — لا ما يُفترض أن تفعله. تستغرق دقيقتين، وتظهر نتيجتك فورًا.</p>
+
+      <div class="legend">
+        <b>المقياس:</b>
+        <span>أبدًا ١</span><span>نادرًا ٢</span><span>أحيانًا ٣</span><span>كثيرًا ٤</span><span>دائمًا ٥</span>
       </div>
-      <div class="field">
-        <label>الفرع</label>
-        <input id="branchName" placeholder="اكتب الفرع">
+
+      <div class="fields">
+        <div class="field"><label for="employeeName">اسم الموظف</label><input id="employeeName" placeholder="اكتب اسمك" autocomplete="name"></div>
+        <div class="field"><label for="branchName">الفرع</label><input id="branchName" placeholder="اكتب الفرع"></div>
+        <div class="field"><label for="designation">المسمى الوظيفي</label><input id="designation" placeholder="اكتب المسمى الوظيفي"></div>
       </div>
-      <div class="field">
-        <label>المسمى الوظيفي</label>
-        <input id="designation" placeholder="اكتب المسمى الوظيفي">
+
+      <button class="btn mt" id="startBtn" type="button">ابدأ التقييم →</button>
+      <div class="inline-msg" id="introMsg">أكمل الاسم والفرع والمسمى الوظيفي للبدء.</div>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="screen" id="screen-quiz">
+      <div class="qhead">
+        <div class="qcount">السؤال <b id="qNow">1</b> من 20</div>
+        <button class="btn ghost" id="backBtn" type="button" style="visibility:hidden">→ السابق</button>
       </div>
-    </div>
+      <div class="bar"><i id="progFill"></i></div>
+      <div class="qbody" id="qBody">
+        <p class="qtext" id="qText"></p>
+        <div class="options" id="optWrap"></div>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section class="screen result" id="screen-result">
+      <p class="meta" id="resMeta"></p>
+      <div class="gauge">
+        <svg viewBox="0 0 230 230" width="230" height="230">
+          <circle class="track" cx="115" cy="115" r="96"></circle>
+          <circle class="prog" id="gaugeProg" cx="115" cy="115" r="96"></circle>
+        </svg>
+        <div class="center"><div class="score" id="scoreNum">0</div><div class="outof">من ١٠٠</div></div>
+      </div>
+      <div class="badge" id="resBadge"></div>
+      <h2 class="rtitle" id="resTitle"></h2>
+      <p class="rtext" id="resText"></p>
+      <div class="save-state" id="saveState"></div>
+      <button class="btn mt" id="restartBtn" type="button">إعادة التقييم</button>
+    </section>
+
   </div>
-
-  <form id="quiz" class="card"></form>
-
-  <div class="card">
-    <button onclick="calculateScore()" type="button" id="submitBtn">إظهار النتيجة وحفظها</button>
-    <div id="missing" class="missing">فضلاً أكمل البيانات وأجب على جميع الأسئلة قبل عرض النتيجة.</div>
-    <div id="result" class="result"></div>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQ1OjQAEp46sEEdfNezrjuVFYY0_SSERB2Ymx84rz18TKDSggln5oIWn8odRxkMK1v/exec';
 
+// r:true => عكسي (يُحتسب 6 - الإجابة)
 const questions = [
   {t:"عندما أواجه مشكلة، أحاول حلها بنفسي قبل أن أسأل رئيسي ماذا أفعل.", r:false},
   {t:"عندما أفوض العمل، أعطيه لمن لديه أكبر وقت متاح.", r:true},
@@ -103,120 +248,145 @@ const questions = [
   {t:"أتحدث مع أعضاء الفريق كأفراد للتأكد من أنهم سعداء ومنتجون.", r:false},
   {t:"أبلغ أعضاء فريقي بإيجاز حتى يعرفوا ما يدور حولهم في الشركة.", r:false}
 ];
+const labels = [["أبدًا",1],["نادرًا",2],["أحيانًا",3],["كثيرًا",4],["دائمًا",5]];
+const answers = new Array(questions.length).fill(null);
+let idx = 0;
 
-const opts = [
-  ["أبدًا",1],["نادرًا",2],["أحيانًا",3],["كثيرًا",4],["دائمًا",5]
-];
+const $ = id => document.getElementById(id);
+const screens = { intro:$('screen-intro'), quiz:$('screen-quiz'), result:$('screen-result') };
+function show(name){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[name].classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+const tick = `<span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`;
 
-const form = document.getElementById("quiz");
-questions.forEach((q,i)=>{
-  const div=document.createElement("div");
-  div.className="q";
-  div.innerHTML =
-    `<div class="q-title">${i+1}. ${q.t}</div><div class="options">` +
-    opts.map(([label,val]) =>
-      `<label class="option"><input type="radio" name="q${i}" value="${val}">${label}</label>`
-    ).join("") +
-    `</div>`;
-  form.appendChild(div);
+/* ---- 3D tilt (mouse + gyro) ---- */
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tiltOn = !reduced;
+const root = document.documentElement;
+function setTilt(nx, ny){
+  if(!tiltOn) return;
+  const max = 7;
+  root.style.setProperty('--ry', (nx*max).toFixed(2)+'deg');
+  root.style.setProperty('--rx', (-ny*max).toFixed(2)+'deg');
+  root.style.setProperty('--px', (nx*-22).toFixed(1)+'px');
+  root.style.setProperty('--py', (ny*-22).toFixed(1)+'px');
+}
+window.addEventListener('mousemove', e=>{
+  setTilt(e.clientX/window.innerWidth - 0.5, e.clientY/window.innerHeight - 0.5);
 });
-
-function showToast(msg, type='success'){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast show ' + type;
-  setTimeout(()=>{ t.className='toast'; }, 4000);
+function onOrient(e){
+  const g = e.gamma||0, b = e.beta||0;
+  const nx = Math.max(-1, Math.min(1, g/28)) * 0.5;
+  const ny = Math.max(-1, Math.min(1, (b-40)/28)) * 0.5;
+  setTilt(nx, ny);
+}
+function enableGyro(){
+  if(reduced) return;
+  if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+    DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('deviceorientation', onOrient); }).catch(()=>{});
+  } else if(window.DeviceOrientationEvent){
+    window.addEventListener('deviceorientation', onOrient);
+  }
 }
 
-async function calculateScore(){
-  const employeeName = document.getElementById("employeeName").value.trim();
-  const branchName = document.getElementById("branchName").value.trim();
-  const designation = document.getElementById("designation").value.trim();
-
-  if(!employeeName || !branchName || !designation){
-    document.getElementById("missing").style.display="block";
-    document.getElementById("missing").textContent="فضلاً أكمل الاسم والفرع والمسمى الوظيفي قبل عرض النتيجة.";
-    document.getElementById("result").style.display="none";
+/* ---- intro ---- */
+$('startBtn').addEventListener('click', ()=>{
+  enableGyro();
+  const ok = ['employeeName','branchName','designation'].every(id => $(id).value.trim());
+  if(!ok){
+    const m = $('introMsg'); m.style.display='block';
+    m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake');
     return;
   }
+  $('introMsg').style.display='none';
+  idx = 0; show('quiz'); renderQuestion();
+});
 
-  let total=0;
-  const answers=[];
+/* ---- quiz ---- */
+function renderQuestion(){
+  const q = questions[idx];
+  $('qNow').textContent = idx+1;
+  $('progFill').style.width = (idx/questions.length*100)+'%';
+  $('backBtn').style.visibility = idx===0 ? 'hidden' : 'visible';
+  $('qText').textContent = q.t;
 
-  for(let i=0;i<questions.length;i++){
-    const checked=document.querySelector(`input[name="q${i}"]:checked`);
-    if(!checked){
-      document.getElementById("missing").style.display="block";
-      document.getElementById("missing").textContent="فضلاً أجب على جميع الأسئلة قبل عرض النتيجة.";
-      document.getElementById("result").style.display="none";
-      return;
-    }
-    let v=parseInt(checked.value, 10);
-    answers.push(v);
-    total += questions[i].r ? (6-v) : v;
-  }
+  const wrap = $('optWrap'); wrap.innerHTML='';
+  labels.forEach(([label,val])=>{
+    const b = document.createElement('button');
+    b.type='button';
+    b.className='opt' + (answers[idx]===val ? ' sel' : '');
+    b.innerHTML = `${tick}<span>${label}</span><span class="num">${val}</span>`;
+    b.addEventListener('click', ()=>pick(val));
+    wrap.appendChild(b);
+  });
 
-  document.getElementById("missing").style.display="none";
+  const body = $('qBody');
+  body.classList.remove('flip'); void body.offsetWidth; body.classList.add('flip');
+}
+function pick(val){
+  answers[idx] = val;
+  [...$('optWrap').children].forEach(el=>{
+    el.classList.toggle('sel', el.querySelector('.num').textContent == val);
+  });
+  setTimeout(()=>{ if(idx < questions.length-1){ idx++; renderQuestion(); } else { finish(); } }, 320);
+}
+$('backBtn').addEventListener('click', ()=>{ if(idx>0){ idx--; renderQuestion(); } });
 
-  const res=document.getElementById("result");
-  res.style.display="block";
-  res.className="result";
+/* ---- result ---- */
+function computeTotal(){ let t=0; questions.forEach((q,i)=>{ const v=answers[i]; t += q.r ? (6-v) : v; }); return t; }
+function band(total){
+  if(total<=46) return {key:'low', color:'#ff5b6e', bg:'rgba(255,91,110,.16)', title:'تحتاج إلى تحسين عاجل',
+    text:'مهاراتك الإدارية بحاجة إلى تطوير سريع. ابدأ بأساسيات تنظيم الفريق ومتابعة الأداء، وحدّد عادتين تغيّرهما هذا الأسبوع.'};
+  if(total<=73) return {key:'mid', color:'#f2b94e', bg:'rgba(242,185,78,.16)', title:'في طريقك لتصبح مديرًا جيدًا',
+    text:'لديك ممارسات جيدة بالفعل، لكن بعض المجالات تحتاج إلى صقل. ركّز على النقاط التي كانت درجاتك فيها منخفضة، وضع خطة تحسين واضحة.'};
+  return {key:'high', color:'#34d399', bg:'rgba(52,211,153,.16)', title:'أداء إداري رائع',
+    text:'أنت تدير فريقك باقتدار. وجّه طاقتك الآن نحو تطوير الآخرين وربط أهداف الفريق بأهداف الشركة لتصل أبعد.'};
+}
+function finish(){
+  const total = computeTotal(); const b = band(total);
+  $('progFill').style.width = '100%';
+  $('resMeta').innerHTML = `<b>${$('employeeName').value.trim()}</b> · ${$('branchName').value.trim()} · ${$('designation').value.trim()}`;
+  $('resBadge').textContent = b.title; $('resBadge').style.color = b.color; $('resBadge').style.background = b.bg;
+  $('resTitle').textContent = b.title; $('resText').textContent = b.text;
 
-  let title="", text="";
-  if(total<=46){
-    res.classList.add("low");
-    title="تحتاج إلى تحسين عاجل";
-    text="أنت بحاجة إلى تحسين مهاراتك الإدارية بشكل عاجل. إذا كنت تريد أن تكون فعالًا في دور قيادي، ابدأ بتطوير مهارات تنظيم ومتابعة الفريق.";
-  }else if(total<=73){
-    res.classList.add("mid");
-    title="أنت في طريقك لتصبح مديرًا جيدًا";
-    text="لديك ممارسات جيدة، لكن توجد مهارات تحتاج إلى تطوير. ركّز على المجالات التي انخفضت فيها درجاتك وابدأ بخطة تحسين واضحة.";
-  }else{
-    res.classList.add("high");
-    title="أداء إداري رائع";
-    text="أنت تقوم بعمل رائع في إدارة فريقك. ركّز الآن على تحسين مهاراتك بشكل أكبر والاستفادة منها للوصول إلى أهدافك المهنية.";
-  }
+  const ring = $('gaugeProg'); const r=96, C=2*Math.PI*r;
+  ring.style.strokeDasharray = C; ring.style.strokeDashoffset = C; ring.style.stroke = b.color; ring.style.color = b.color;
 
-  res.innerHTML = `درجتك: ${total} من 100<br>${title}<br><span style="font-weight:400">${text}</span>`;
-
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ جارٍ الحفظ...";
-
-  try {
-    const payload = {
-      employee_name: employeeName,
-      branch_name: branchName,
-      designation: designation,
-      total_score: total,
-      result_title: title,
-      result_text: text,
-      answers: answers
-    };
-
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    btn.disabled = false;
-    btn.textContent = "إظهار النتيجة وحفظها";
-
-    if (data.success) {
-      showToast("✅ تم حفظ التقييم بنجاح", "success");
-    } else {
-      showToast("خطأ: " + data.message, "error");
-    }
-  } catch (error) {
-    btn.disabled = false;
-    btn.textContent = "إظهار النتيجة وحفظها";
-    console.error(error);
-    showToast("فشل الاتصال مع Google Sheets", "error");
+  show('result');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ ring.style.strokeDashoffset = C*(1-total/100); }));
+  countUp($('scoreNum'), total, 1500);
+  if(b.key==='high') burstConfetti();
+  saveToSheet(total, b);
+}
+function countUp(el,to,dur){
+  const s=performance.now();
+  (function step(now){ const p=Math.min((now-s)/dur,1); el.textContent=Math.round(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(step); else el.textContent=to; })(s);
+}
+function burstConfetti(){
+  if(reduced) return;
+  const cols=['#7c5cff','#b14bff','#ff4d9d','#f2b94e','#34d399','#33e0ff'];
+  for(let i=0;i<100;i++){
+    const c=document.createElement('div'); c.className='confetti';
+    c.style.left=Math.random()*100+'vw'; c.style.background=cols[i%cols.length];
+    c.style.animationDuration=(2.4+Math.random()*1.9)+'s'; c.style.animationDelay=(Math.random()*.5)+'s';
+    c.style.transform=`rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(c); setTimeout(()=>c.remove(),5000);
   }
 }
+
+/* ---- save (text/plain = CORS-safe, no preflight) ---- */
+async function saveToSheet(total,b){
+  const el=$('saveState'); el.className='save-state'; el.innerHTML='<span class="spin"></span> جارٍ حفظ النتيجة...';
+  try{
+    const payload={ employee_name:$('employeeName').value.trim(), branch_name:$('branchName').value.trim(),
+      designation:$('designation').value.trim(), total_score:total, result_title:b.title, result_text:b.text, answers:answers };
+    const res=await fetch(SCRIPT_URL,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
+    const data=await res.json();
+    if(data.success){ el.className='save-state ok'; el.textContent='✅ تم حفظ نتيجتك بنجاح.'; }
+    else { el.className='save-state err'; el.textContent='تعذّر الحفظ: '+(data.message||''); }
+  }catch(err){ el.className='save-state err'; el.textContent='تعذّر الاتصال بالخادم — النتيجة ظاهرة لكنها لم تُحفظ.'; console.error(err); }
+}
+
+/* ---- restart ---- */
+$('restartBtn').addEventListener('click', ()=>{ answers.fill(null); idx=0; $('saveState').textContent=''; $('saveState').className='save-state'; show('intro'); });
 </script>
 </body>
 </html>
