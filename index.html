@@ -19,23 +19,15 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;overflow-x:hidden}
-  body{
-    font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;
-    color:var(--txt);
-    background:#070611;
-    min-height:100dvh;
-    -webkit-font-smoothing:antialiased;
-  }
+  body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;color:var(--txt);background:#070611;min-height:100dvh;-webkit-font-smoothing:antialiased}
 
-  /* ===== Depth background ===== */
   .bgwrap{position:fixed;inset:-12%;z-index:0;pointer-events:none;transform:translate(var(--px),var(--py));transition:transform .25s ease-out}
   .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
   .orb.a{width:46vw;height:46vw;left:-8vw;top:-6vh;background:radial-gradient(circle,#6b3cff,transparent 70%)}
-  .orb.b{width:42vw;height:42vw;right:-10vw;top:18vh;background:radial-gradient(circle,#ff3d97,transparent 70%);transform:translate(calc(var(--px) * -1.6),calc(var(--py) * -1.6))}
-  .orb.c{width:36vw;height:36vw;left:24vw;bottom:-14vh;background:radial-gradient(circle,#1fb6ff,transparent 70%);transform:translate(calc(var(--px) * 1.3),calc(var(--py) * 1.3))}
+  .orb.b{width:42vw;height:42vw;right:-10vw;top:18vh;background:radial-gradient(circle,#ff3d97,transparent 70%);transform:translate(calc(var(--px)*-1.6),calc(var(--py)*-1.6))}
+  .orb.c{width:36vw;height:36vw;left:24vw;bottom:-14vh;background:radial-gradient(circle,#1fb6ff,transparent 70%);transform:translate(calc(var(--px)*1.3),calc(var(--py)*1.3))}
   .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;background-image:radial-gradient(rgba(255,255,255,.7) 1px,transparent 1px);background-size:3px 3px}
 
-  /* ===== Scene / 3D ===== */
   .scene{position:relative;z-index:2;perspective:1300px;max-width:680px;margin:0 auto;padding:clamp(16px,4vw,40px) 18px 70px;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
 
   .brand{display:flex;align-items:center;gap:13px;justify-content:center;margin-bottom:22px;perspective:500px}
@@ -52,20 +44,7 @@
 
   .deckwrap{transform-style:preserve-3d;animation:flyIn .8s cubic-bezier(.2,.8,.2,1) both}
   @keyframes flyIn{from{opacity:0;transform:translateZ(-280px) rotateX(20deg)}to{opacity:1;transform:none}}
-
-  .deck{
-    transform-style:preserve-3d;
-    transform:rotateX(var(--rx)) rotateY(var(--ry));
-    transition:transform .25s ease-out;
-    background:var(--glass);
-    border:1px solid var(--glass-brd);
-    border-radius:28px;
-    padding:clamp(22px,5vw,40px);
-    -webkit-backdrop-filter:blur(20px) saturate(140%);
-    backdrop-filter:blur(20px) saturate(140%);
-    box-shadow:0 40px 90px -40px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.16);
-    position:relative;
-  }
+  .deck{transform-style:preserve-3d;transform:rotateX(var(--rx)) rotateY(var(--ry));transition:transform .25s ease-out;background:var(--glass);border:1px solid var(--glass-brd);border-radius:28px;padding:clamp(22px,5vw,40px);-webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);box-shadow:0 40px 90px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.16);position:relative}
 
   .screen{display:none}
   .screen.active{display:block;animation:rise .5s ease both}
@@ -86,21 +65,19 @@
   .field input:focus{outline:none;border-color:var(--v);box-shadow:0 0 0 4px rgba(124,92,255,.22)}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:16px;padding:16px;font-family:"Cairo";font-weight:800;font-size:18px;cursor:pointer;color:#fff;background:var(--grad);box-shadow:0 18px 40px -14px rgba(124,92,255,.85),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .15s,box-shadow .15s,opacity .2s}
-  .btn:hover{transform:translateY(-2px)}
-  .btn:active{transform:translateY(0)}
-  .btn:disabled{opacity:.55;cursor:default;transform:none}
-  .btn.ghost{background:rgba(255,255,255,.06);color:var(--txt);border:1.5px solid var(--glass-brd);box-shadow:none;font-size:14.5px;padding:11px 16px;width:auto;font-weight:700}
+  .btn:hover{transform:translateY(-2px)} .btn:active{transform:translateY(0)} .btn:disabled{opacity:.55;cursor:default;transform:none}
+  .btn.ghost{background:rgba(255,255,255,.06);color:var(--txt);border:1.5px solid var(--glass-brd);box-shadow:none;font-size:14.5px;padding:13px;font-weight:700}
   .btn.ghost:hover{transform:none;background:rgba(255,255,255,.12)}
   .mt{margin-top:22px}
+  .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:22px}
+  @media(max-width:520px){.btnrow{grid-template-columns:1fr}}
 
   .inline-msg{display:none;background:rgba(255,91,110,.12);border:1px solid rgba(255,91,110,.5);color:#ff9aa6;border-radius:12px;padding:11px 14px;font-size:13.5px;margin-top:14px}
   .shake{animation:shake .42s}
   @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
 
-  /* ===== Quiz ===== */
   .qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-  .qcount{font-family:"Cairo";font-weight:700;font-size:13.5px;color:var(--muted)}
-  .qcount b{color:#fff;font-size:21px}
+  .qcount{font-family:"Cairo";font-weight:700;font-size:13.5px;color:var(--muted)} .qcount b{color:#fff;font-size:21px}
   .bar{height:9px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:28px}
   .bar>i{display:block;height:100%;width:0;border-radius:999px;background:var(--grad);box-shadow:0 0 14px rgba(255,77,157,.7);transition:width .5s cubic-bezier(.2,.8,.2,1)}
 
@@ -117,16 +94,12 @@
   .opt .tick svg{width:13px;height:13px;opacity:0;transform:scale(.4);transition:.18s;stroke:#fff}
   .opt .num{font-family:"Cairo";font-weight:700;color:var(--muted);font-size:13px;margin-inline-start:auto;background:rgba(255,255,255,.06);border:1px solid var(--glass-brd);border-radius:8px;padding:2px 9px;min-width:26px;text-align:center}
   .opt.sel{border-color:var(--v);background:rgba(124,92,255,.22);transform:translateZ(20px);box-shadow:0 16px 34px -14px rgba(124,92,255,.9)}
-  .opt.sel .tick{background:var(--v);border-color:var(--v)}
-  .opt.sel .tick svg{opacity:1;transform:none}
+  .opt.sel .tick{background:var(--v);border-color:var(--v)} .opt.sel .tick svg{opacity:1;transform:none}
   .opt.sel .num{background:var(--v);color:#fff;border-color:var(--v)}
 
-  .qfoot{display:flex;justify-content:flex-start;margin-top:24px}
-
-  /* ===== Result ===== */
   .result{text-align:center}
-  .meta{font-size:13px;color:var(--muted);margin-bottom:14px}
-  .meta b{color:#fff;font-weight:600}
+  .meta{font-size:13px;color:var(--muted);margin-bottom:4px} .meta b{color:#fff;font-weight:600}
+  .daytag{font-size:12px;color:var(--muted);margin-bottom:12px}
   .gauge{position:relative;width:230px;height:230px;margin:6px auto 6px;transform-style:preserve-3d;animation:bob 4s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateZ(0)}50%{transform:translateZ(34px)}}
   .gauge svg{transform:rotate(-90deg)}
@@ -139,9 +112,17 @@
   @keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
   .rtitle{font-family:"Cairo";font-weight:900;font-size:clamp(22px,5.6vw,30px);margin:2px 0 10px}
   .rtext{color:var(--muted);font-size:15.5px;line-height:1.8;max-width:46ch;margin:0 auto 8px}
-  .save-state{font-size:13px;color:var(--muted);margin-top:16px;min-height:20px}
-  .save-state.ok{color:var(--high)}
-  .save-state.err{color:var(--low)}
+
+  .brk-title{font-family:"Cairo";font-weight:800;font-size:16px;margin:26px 0 14px;text-align:right;color:var(--txt)}
+  .breakdown{display:grid;gap:14px;text-align:right}
+  .brk .top{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:7px}
+  .brk .top b{font-weight:600;color:var(--txt)}
+  .brk .top span{font-family:"Cairo";font-weight:800;font-size:15px}
+  .brk .tr{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+  .brk .fl{height:100%;width:0;border-radius:999px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+
+  .save-state{font-size:13px;color:var(--muted);margin-top:18px;min-height:20px}
+  .save-state.ok{color:var(--high)} .save-state.err{color:var(--low)}
   .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:var(--v);border-radius:50%;animation:rot .7s linear infinite;vertical-align:-2px;margin-inline-end:6px}
   @keyframes rot{to{transform:rotate(360deg)}}
 
@@ -159,67 +140,47 @@
 <div class="grain"></div>
 
 <div class="scene">
-  <div class="brand">
-    <div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <b>SWAG · تقييم القيادة</b>
-  </div>
+  <div class="brand"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div><b>SWAG · تقييم القيادة</b></div>
 
-  <div class="deckwrap">
-  <div class="deck" id="deck">
+  <div class="deckwrap"><div class="deck" id="deck">
 
     <!-- INTRO -->
     <section class="screen active" id="screen-intro">
-      <p class="eyebrow">تقييم ذاتي · ٢٠ سؤالًا</p>
+      <p class="eyebrow">تقييم يومي · ٢٠ سؤالًا</p>
       <h1>ما مدى جودة مهاراتك الإدارية؟</h1>
-      <p class="lede">أجب بصدق بناءً على سلوكك الفعلي — لا ما يُفترض أن تفعله. تستغرق دقيقتين، وتظهر نتيجتك فورًا.</p>
-
-      <div class="legend">
-        <b>المقياس:</b>
-        <span>أبدًا ١</span><span>نادرًا ٢</span><span>أحيانًا ٣</span><span>كثيرًا ٤</span><span>دائمًا ٥</span>
-      </div>
-
+      <p class="lede">أجب بصدق بناءً على سلوكك الفعلي اليوم. تستغرق دقيقتين، وتظهر نتيجتك مع تفصيل الكفاءات فورًا.</p>
+      <div class="legend"><b>المقياس:</b><span>أبدًا ١</span><span>نادرًا ٢</span><span>أحيانًا ٣</span><span>كثيرًا ٤</span><span>دائمًا ٥</span></div>
       <div class="fields">
-        <div class="field"><label for="employeeName">اسم الموظف</label><input id="employeeName" placeholder="اكتب اسمك" autocomplete="name"></div>
         <div class="field"><label for="branchName">الفرع</label><input id="branchName" placeholder="اكتب الفرع"></div>
+        <div class="field"><label for="employeeName">اسم الموظف</label><input id="employeeName" placeholder="اكتب اسمك" autocomplete="name"></div>
         <div class="field"><label for="designation">المسمى الوظيفي</label><input id="designation" placeholder="اكتب المسمى الوظيفي"></div>
       </div>
-
       <button class="btn mt" id="startBtn" type="button">ابدأ التقييم →</button>
-      <div class="inline-msg" id="introMsg">أكمل الاسم والفرع والمسمى الوظيفي للبدء.</div>
+      <div class="inline-msg" id="introMsg">أكمل الفرع والاسم والمسمى الوظيفي للبدء.</div>
     </section>
 
     <!-- QUIZ -->
     <section class="screen" id="screen-quiz">
-      <div class="qhead">
-        <div class="qcount">السؤال <b id="qNow">1</b> من 20</div>
-        <button class="btn ghost" id="backBtn" type="button" style="visibility:hidden">→ السابق</button>
-      </div>
+      <div class="qhead"><div class="qcount">السؤال <b id="qNow">1</b> من 20</div><button class="btn ghost" id="backBtn" type="button" style="visibility:hidden;width:auto">→ السابق</button></div>
       <div class="bar"><i id="progFill"></i></div>
-      <div class="qbody" id="qBody">
-        <p class="qtext" id="qText"></p>
-        <div class="options" id="optWrap"></div>
-      </div>
+      <div class="qbody" id="qBody"><p class="qtext" id="qText"></p><div class="options" id="optWrap"></div></div>
     </section>
 
     <!-- RESULT -->
     <section class="screen result" id="screen-result">
       <p class="meta" id="resMeta"></p>
-      <div class="gauge">
-        <svg viewBox="0 0 230 230" width="230" height="230">
-          <circle class="track" cx="115" cy="115" r="96"></circle>
-          <circle class="prog" id="gaugeProg" cx="115" cy="115" r="96"></circle>
-        </svg>
-        <div class="center"><div class="score" id="scoreNum">0</div><div class="outof">من ١٠٠</div></div>
-      </div>
+      <p class="daytag" id="dayTag"></p>
+      <div class="gauge"><svg viewBox="0 0 230 230" width="230" height="230"><circle class="track" cx="115" cy="115" r="96"></circle><circle class="prog" id="gaugeProg" cx="115" cy="115" r="96"></circle></svg><div class="center"><div class="score" id="scoreNum">0</div><div class="outof">من ١٠٠</div></div></div>
       <div class="badge" id="resBadge"></div>
       <h2 class="rtitle" id="resTitle"></h2>
       <p class="rtext" id="resText"></p>
+      <div class="brk-title">تفصيل الكفاءات</div>
+      <div class="breakdown" id="breakdown"></div>
       <div class="save-state" id="saveState"></div>
-      <button class="btn mt" id="restartBtn" type="button">إعادة التقييم</button>
+      <div class="btnrow"><button class="btn" id="anotherBtn" type="button">تقييم موظف آخر</button><button class="btn ghost" id="restartBtn" type="button">تغيير الفرع</button></div>
     </section>
 
-  </div>
-  </div>
+  </div></div>
 </div>
 
 <script>
@@ -248,6 +209,16 @@ const questions = [
   {t:"أتحدث مع أعضاء الفريق كأفراد للتأكد من أنهم سعداء ومنتجون.", r:false},
   {t:"أبلغ أعضاء فريقي بإيجاز حتى يعرفوا ما يدور حولهم في الشركة.", r:false}
 ];
+
+// 5 كفاءات تغطي الأسئلة العشرين (مؤشرات صفرية)
+const categories = [
+  {key:'cat_delegation',    name:'التفويض والثقة',           idx:[1,4,17]},
+  {key:'cat_communication', name:'التواصل والمتابعة',        idx:[7,8,18,19]},
+  {key:'cat_decision',      name:'اتخاذ القرار وحل المشكلات', idx:[0,3,9]},
+  {key:'cat_performance',   name:'إدارة الأداء والصراع',      idx:[2,5,11,13,14]},
+  {key:'cat_team',          name:'بناء الفريق والتحفيز',      idx:[6,10,12,15,16]}
+];
+
 const labels = [["أبدًا",1],["نادرًا",2],["أحيانًا",3],["كثيرًا",4],["دائمًا",5]];
 const answers = new Array(questions.length).fill(null);
 let idx = 0;
@@ -256,128 +227,116 @@ const $ = id => document.getElementById(id);
 const screens = { intro:$('screen-intro'), quiz:$('screen-quiz'), result:$('screen-result') };
 function show(name){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[name].classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
 const tick = `<span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`;
+function lvlColor(p){ return p<55 ? 'var(--low)' : (p<75 ? 'var(--mid)' : 'var(--high)'); }
 
-/* ---- 3D tilt (mouse + gyro) ---- */
+/* remember branch on this device */
+try{ const saved = localStorage.getItem('swag_branch'); if(saved) $('branchName').value = saved; }catch(e){}
+
+/* ---- 3D tilt ---- */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let tiltOn = !reduced;
 const root = document.documentElement;
-function setTilt(nx, ny){
-  if(!tiltOn) return;
-  const max = 7;
-  root.style.setProperty('--ry', (nx*max).toFixed(2)+'deg');
-  root.style.setProperty('--rx', (-ny*max).toFixed(2)+'deg');
-  root.style.setProperty('--px', (nx*-22).toFixed(1)+'px');
-  root.style.setProperty('--py', (ny*-22).toFixed(1)+'px');
-}
-window.addEventListener('mousemove', e=>{
-  setTilt(e.clientX/window.innerWidth - 0.5, e.clientY/window.innerHeight - 0.5);
-});
-function onOrient(e){
-  const g = e.gamma||0, b = e.beta||0;
-  const nx = Math.max(-1, Math.min(1, g/28)) * 0.5;
-  const ny = Math.max(-1, Math.min(1, (b-40)/28)) * 0.5;
-  setTilt(nx, ny);
-}
-function enableGyro(){
-  if(reduced) return;
-  if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
-    DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('deviceorientation', onOrient); }).catch(()=>{});
-  } else if(window.DeviceOrientationEvent){
-    window.addEventListener('deviceorientation', onOrient);
-  }
-}
+function setTilt(nx, ny){ if(!tiltOn) return; const max=7;
+  root.style.setProperty('--ry',(nx*max).toFixed(2)+'deg'); root.style.setProperty('--rx',(-ny*max).toFixed(2)+'deg');
+  root.style.setProperty('--px',(nx*-22).toFixed(1)+'px'); root.style.setProperty('--py',(ny*-22).toFixed(1)+'px'); }
+window.addEventListener('mousemove', e=>setTilt(e.clientX/innerWidth-0.5, e.clientY/innerHeight-0.5));
+function onOrient(e){ const g=e.gamma||0,b=e.beta||0; setTilt(Math.max(-1,Math.min(1,g/28))*0.5, Math.max(-1,Math.min(1,(b-40)/28))*0.5); }
+function enableGyro(){ if(reduced) return;
+  if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted') addEventListener('deviceorientation',onOrient); }).catch(()=>{});
+  } else if(window.DeviceOrientationEvent){ addEventListener('deviceorientation',onOrient); } }
 
 /* ---- intro ---- */
 $('startBtn').addEventListener('click', ()=>{
   enableGyro();
-  const ok = ['employeeName','branchName','designation'].every(id => $(id).value.trim());
-  if(!ok){
-    const m = $('introMsg'); m.style.display='block';
-    m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake');
-    return;
-  }
+  const ok = ['branchName','employeeName','designation'].every(id => $(id).value.trim());
+  if(!ok){ const m=$('introMsg'); m.style.display='block'; m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); return; }
+  try{ localStorage.setItem('swag_branch', $('branchName').value.trim()); }catch(e){}
   $('introMsg').style.display='none';
-  idx = 0; show('quiz'); renderQuestion();
+  idx=0; show('quiz'); renderQuestion();
 });
 
 /* ---- quiz ---- */
 function renderQuestion(){
-  const q = questions[idx];
-  $('qNow').textContent = idx+1;
-  $('progFill').style.width = (idx/questions.length*100)+'%';
-  $('backBtn').style.visibility = idx===0 ? 'hidden' : 'visible';
-  $('qText').textContent = q.t;
-
-  const wrap = $('optWrap'); wrap.innerHTML='';
+  const q=questions[idx];
+  $('qNow').textContent=idx+1;
+  $('progFill').style.width=(idx/questions.length*100)+'%';
+  $('backBtn').style.visibility=idx===0?'hidden':'visible';
+  $('qText').textContent=q.t;
+  const wrap=$('optWrap'); wrap.innerHTML='';
   labels.forEach(([label,val])=>{
-    const b = document.createElement('button');
-    b.type='button';
-    b.className='opt' + (answers[idx]===val ? ' sel' : '');
-    b.innerHTML = `${tick}<span>${label}</span><span class="num">${val}</span>`;
-    b.addEventListener('click', ()=>pick(val));
-    wrap.appendChild(b);
+    const b=document.createElement('button'); b.type='button';
+    b.className='opt'+(answers[idx]===val?' sel':'');
+    b.innerHTML=`${tick}<span>${label}</span><span class="num">${val}</span>`;
+    b.addEventListener('click',()=>pick(val)); wrap.appendChild(b);
   });
-
-  const body = $('qBody');
-  body.classList.remove('flip'); void body.offsetWidth; body.classList.add('flip');
+  const body=$('qBody'); body.classList.remove('flip'); void body.offsetWidth; body.classList.add('flip');
 }
 function pick(val){
-  answers[idx] = val;
-  [...$('optWrap').children].forEach(el=>{
-    el.classList.toggle('sel', el.querySelector('.num').textContent == val);
-  });
-  setTimeout(()=>{ if(idx < questions.length-1){ idx++; renderQuestion(); } else { finish(); } }, 320);
+  answers[idx]=val;
+  [...$('optWrap').children].forEach(el=>el.classList.toggle('sel', el.querySelector('.num').textContent==val));
+  setTimeout(()=>{ if(idx<questions.length-1){ idx++; renderQuestion(); } else { finish(); } },320);
 }
-$('backBtn').addEventListener('click', ()=>{ if(idx>0){ idx--; renderQuestion(); } });
+$('backBtn').addEventListener('click',()=>{ if(idx>0){ idx--; renderQuestion(); } });
 
-/* ---- result ---- */
-function computeTotal(){ let t=0; questions.forEach((q,i)=>{ const v=answers[i]; t += q.r ? (6-v) : v; }); return t; }
+/* ---- scoring ---- */
+function scored(i){ return questions[i].r ? (6-answers[i]) : answers[i]; }
+function computeTotal(){ let t=0; for(let i=0;i<questions.length;i++) t+=scored(i); return t; }
+function catScore(cat){ let s=0; cat.idx.forEach(i=>s+=scored(i)); return Math.round(s/(cat.idx.length*5)*100); }
 function band(total){
-  if(total<=46) return {key:'low', color:'#ff5b6e', bg:'rgba(255,91,110,.16)', title:'تحتاج إلى تحسين عاجل',
+  if(total<=46) return {key:'low',color:'#ff5b6e',bg:'rgba(255,91,110,.16)',title:'تحتاج إلى تحسين عاجل',
     text:'مهاراتك الإدارية بحاجة إلى تطوير سريع. ابدأ بأساسيات تنظيم الفريق ومتابعة الأداء، وحدّد عادتين تغيّرهما هذا الأسبوع.'};
-  if(total<=73) return {key:'mid', color:'#f2b94e', bg:'rgba(242,185,78,.16)', title:'في طريقك لتصبح مديرًا جيدًا',
-    text:'لديك ممارسات جيدة بالفعل، لكن بعض المجالات تحتاج إلى صقل. ركّز على النقاط التي كانت درجاتك فيها منخفضة، وضع خطة تحسين واضحة.'};
-  return {key:'high', color:'#34d399', bg:'rgba(52,211,153,.16)', title:'أداء إداري رائع',
+  if(total<=73) return {key:'mid',color:'#f2b94e',bg:'rgba(242,185,78,.16)',title:'في طريقك لتصبح مديرًا جيدًا',
+    text:'لديك ممارسات جيدة بالفعل، لكن بعض المجالات تحتاج إلى صقل. ركّز على النقاط التي كانت درجاتك فيها منخفضة.'};
+  return {key:'high',color:'#34d399',bg:'rgba(52,211,153,.16)',title:'أداء إداري رائع',
     text:'أنت تدير فريقك باقتدار. وجّه طاقتك الآن نحو تطوير الآخرين وربط أهداف الفريق بأهداف الشركة لتصل أبعد.'};
 }
-function finish(){
-  const total = computeTotal(); const b = band(total);
-  $('progFill').style.width = '100%';
-  $('resMeta').innerHTML = `<b>${$('employeeName').value.trim()}</b> · ${$('branchName').value.trim()} · ${$('designation').value.trim()}`;
-  $('resBadge').textContent = b.title; $('resBadge').style.color = b.color; $('resBadge').style.background = b.bg;
-  $('resTitle').textContent = b.title; $('resText').textContent = b.text;
 
-  const ring = $('gaugeProg'); const r=96, C=2*Math.PI*r;
-  ring.style.strokeDasharray = C; ring.style.strokeDashoffset = C; ring.style.stroke = b.color; ring.style.color = b.color;
+/* ---- result ---- */
+function finish(){
+  const total=computeTotal(), b=band(total);
+  $('progFill').style.width='100%';
+  $('resMeta').innerHTML=`<b>${$('employeeName').value.trim()}</b> · ${$('branchName').value.trim()} · ${$('designation').value.trim()}`;
+  $('dayTag').textContent='تقييم بتاريخ '+new Intl.DateTimeFormat('ar',{dateStyle:'long'}).format(new Date());
+  $('resBadge').textContent=b.title; $('resBadge').style.color=b.color; $('resBadge').style.background=b.bg;
+  $('resTitle').textContent=b.title; $('resText').textContent=b.text;
+
+  const ring=$('gaugeProg'), r=96, C=2*Math.PI*r;
+  ring.style.strokeDasharray=C; ring.style.strokeDashoffset=C; ring.style.stroke=b.color; ring.style.color=b.color;
+
+  // breakdown bars
+  const cats = categories.map(c=>({name:c.name, key:c.key, p:catScore(c)}));
+  const wrap=$('breakdown'); wrap.innerHTML='';
+  cats.forEach(c=>{
+    const col=lvlColor(c.p);
+    const el=document.createElement('div'); el.className='brk';
+    el.innerHTML=`<div class="top"><b>${c.name}</b><span style="color:${col}">${c.p}%</span></div><div class="tr"><i class="fl" style="background:${col}"></i></div>`;
+    wrap.appendChild(el);
+  });
 
   show('result');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{ ring.style.strokeDashoffset = C*(1-total/100); }));
-  countUp($('scoreNum'), total, 1500);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    ring.style.strokeDashoffset=C*(1-total/100);
+    [...wrap.querySelectorAll('.fl')].forEach((f,k)=>{ f.style.width=cats[k].p+'%'; });
+  }));
+  countUp($('scoreNum'),total,1500);
   if(b.key==='high') burstConfetti();
-  saveToSheet(total, b);
+  saveToSheet(total,b,cats);
 }
-function countUp(el,to,dur){
-  const s=performance.now();
-  (function step(now){ const p=Math.min((now-s)/dur,1); el.textContent=Math.round(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(step); else el.textContent=to; })(s);
-}
-function burstConfetti(){
-  if(reduced) return;
-  const cols=['#7c5cff','#b14bff','#ff4d9d','#f2b94e','#34d399','#33e0ff'];
-  for(let i=0;i<100;i++){
-    const c=document.createElement('div'); c.className='confetti';
-    c.style.left=Math.random()*100+'vw'; c.style.background=cols[i%cols.length];
-    c.style.animationDuration=(2.4+Math.random()*1.9)+'s'; c.style.animationDelay=(Math.random()*.5)+'s';
-    c.style.transform=`rotate(${Math.random()*360}deg)`;
-    document.body.appendChild(c); setTimeout(()=>c.remove(),5000);
-  }
-}
+function countUp(el,to,dur){ const s=performance.now();
+  (function step(now){ const p=Math.min((now-s)/dur,1); el.textContent=Math.round(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(step); else el.textContent=to; })(s); }
+function burstConfetti(){ if(reduced) return; const cols=['#7c5cff','#b14bff','#ff4d9d','#f2b94e','#34d399','#33e0ff'];
+  for(let i=0;i<100;i++){ const c=document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw';
+    c.style.background=cols[i%cols.length]; c.style.animationDuration=(2.4+Math.random()*1.9)+'s'; c.style.animationDelay=(Math.random()*.5)+'s';
+    c.style.transform=`rotate(${Math.random()*360}deg)`; document.body.appendChild(c); setTimeout(()=>c.remove(),5000); } }
 
 /* ---- save (text/plain = CORS-safe, no preflight) ---- */
-async function saveToSheet(total,b){
+async function saveToSheet(total,b,cats){
   const el=$('saveState'); el.className='save-state'; el.innerHTML='<span class="spin"></span> جارٍ حفظ النتيجة...';
   try{
     const payload={ employee_name:$('employeeName').value.trim(), branch_name:$('branchName').value.trim(),
-      designation:$('designation').value.trim(), total_score:total, result_title:b.title, result_text:b.text, answers:answers };
+      designation:$('designation').value.trim(), total_score:total, band_title:b.title, answers:answers };
+    cats.forEach(c=>payload[c.key]=c.p);
     const res=await fetch(SCRIPT_URL,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
     const data=await res.json();
     if(data.success){ el.className='save-state ok'; el.textContent='✅ تم حفظ نتيجتك بنجاح.'; }
@@ -385,8 +344,14 @@ async function saveToSheet(total,b){
   }catch(err){ el.className='save-state err'; el.textContent='تعذّر الاتصال بالخادم — النتيجة ظاهرة لكنها لم تُحفظ.'; console.error(err); }
 }
 
-/* ---- restart ---- */
-$('restartBtn').addEventListener('click', ()=>{ answers.fill(null); idx=0; $('saveState').textContent=''; $('saveState').className='save-state'; show('intro'); });
+/* ---- next actions (daily use) ---- */
+function resetAnswers(){ answers.fill(null); idx=0; $('saveState').textContent=''; $('saveState').className='save-state'; }
+$('anotherBtn').addEventListener('click', ()=>{ // same branch, new employee
+  resetAnswers(); $('employeeName').value=''; $('designation').value=''; show('intro'); $('employeeName').focus();
+});
+$('restartBtn').addEventListener('click', ()=>{ // change branch
+  resetAnswers(); $('employeeName').value=''; $('designation').value=''; show('intro'); $('branchName').focus();
+});
 </script>
 </body>
 </html>
