@@ -54,6 +54,11 @@
 
   .eyebrow{font-family:"Cairo";font-weight:700;font-size:12.5px;letter-spacing:2.5px;color:var(--m);margin:0 0 10px}
   h1{font-family:"Cairo";font-weight:900;font-size:clamp(27px,6.6vw,40px);line-height:1.22;margin:0 0 12px;text-shadow:0 2px 30px rgba(124,92,255,.35)}
+  .hero-title{position:relative;display:inline-block;max-width:100%}
+  .uline{display:block;width:min(280px,86%);height:auto;margin:2px 0 6px;overflow:visible}
+  .uline path{fill:none;stroke:url(#ulgrad);stroke-width:3.5;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:330;stroke-dashoffset:330;transition:d .7s ease;animation:uldraw 1.7s .35s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes uldraw{to{stroke-dashoffset:0}}
+  .hero-title:hover .uline path{d:path("M 0,10 Q 75,20 150,10 Q 225,0 300,10")}
   .lede{color:var(--muted);margin:0 0 22px;font-size:15.5px;line-height:1.75}
 
   .legend{display:flex;gap:6px;flex-wrap:wrap;background:rgba(255,255,255,.04);border:1px solid var(--glass-brd);border-radius:16px;padding:12px 14px;margin-bottom:22px;font-size:12.5px;color:var(--muted);align-items:center}
@@ -149,7 +154,15 @@
     <!-- INTRO -->
     <section class="screen active" id="screen-intro">
       <p class="eyebrow">تقييم يومي · ٢٠ سؤالًا</p>
-      <h1>ما مدى جودة مهاراتك الإدارية؟</h1>
+      <div class="hero-title">
+        <h1>ما مدى جودة مهاراتك الإدارية؟</h1>
+        <svg class="uline" viewBox="0 0 300 20" aria-hidden="true">
+          <defs><linearGradient id="ulgrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#7c5cff"/><stop offset=".5" stop-color="#b14bff"/><stop offset="1" stop-color="#ff4d9d"/>
+          </linearGradient></defs>
+          <path d="M 0,10 Q 75,0 150,10 Q 225,20 300,10"/>
+        </svg>
+      </div>
       <p class="lede">أجب بصدق بناءً على سلوكك الفعلي اليوم. تستغرق دقيقتين، وتظهر نتيجتك مع تفصيل الكفاءات فورًا.</p>
       <div class="legend"><b>المقياس:</b><span>أبدًا ١</span><span>نادرًا ٢</span><span>أحيانًا ٣</span><span>كثيرًا ٤</span><span>دائمًا ٥</span></div>
       <div class="fields">
