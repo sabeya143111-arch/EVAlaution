@@ -1110,10 +1110,15 @@ async function spFetch(url) {
 async function loadAll() {
   try {
     document.getElementById('live-time').textContent = currentLang==='ar'?'جارٍ المزامنة...':'Syncing...';
-    const [maint, fin] = await Promise.all([
-      spFetch(`${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`),
-      spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`)
-    ]);
+    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`;
+    let maint;
+    try {
+      maint = await spFetch(`${baseM}&$expand=Author,${ASSIGNEE_FIELD}`);
+    } catch(e) {
+      try { maint = await spFetch(`${baseM}&$expand=${ASSIGNEE_FIELD}`); }
+      catch(e2){ maint = await spFetch(baseM); }
+    }
+    const fin = await spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`);
     allRequests = maint;
     allFinance = fin;
     // new-request alert
@@ -1164,6 +1169,29 @@ function financeBadge(s) {
   return `<span class="badge b-progress"><span class="b-dot"></span>${s}</span>`;
 }
 function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ============ PEOPLE FIELD HELPERS ============
+const ASSIGNEE_FIELD = 'OData__x0627__x0644__x0645__x0648__x06';
+function asArr(v){ if(!v) return []; if(Array.isArray(v)) return v; if(v.results) return v.results; return []; }
+function personEmail(a){ return (a?.EMail||a?.Email||a?.email||a?.Mail||a?.UserPrincipalName||'').toLowerCase().trim(); }
+function personName(a){ return (a?.Title||a?.DisplayName||a?.Name||a?.LookupValue||'').toLowerCase().trim(); }
+function assigneeList(i){ return asArr(i[ASSIGNEE_FIELD]); }
+function assigneeNames(i){ return assigneeList(i).map(a=>a.Title||a.DisplayName||a.Name||a.LookupValue).filter(Boolean); }
+function isAssignedToMe(i){
+  if(!currentUser) return false;
+  const me = (currentUser.email||'').toLowerCase().trim();
+  const meName = (currentUser.name||'').toLowerCase().trim();
+  return assigneeList(i).some(a => { const em=personEmail(a), nm=personName(a);
+    return (em && em===me) || (nm && meName && nm===meName); });
+}
+function authorName(i){ const a=i.Author||{}; return a.Title||a.DisplayName||a.Name||'—'; }
+function authorEmail(i){ return personEmail(i.Author); }
+function isMine(i){
+  if(!currentUser) return false;
+  const me=(currentUser.email||'').toLowerCase().trim(), meName=(currentUser.name||'').toLowerCase().trim();
+  const em=authorEmail(i), nm=(authorName(i)||'').toLowerCase().trim();
+  return (em && em===me) || (nm && meName && nm===meName);
+}
 function viewBtn(id) {
   return `<button class="view-btn" onclick="openDetail(${id})"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> ${t('cActions')==='إجراءات'?'عرض':'View'}</button>`;
 }
@@ -1275,7 +1303,7 @@ function animateNum(id, target) {
 // ============ MY REQUESTS ============
 function renderMyRequests() {
   if (!currentUser) return;
-  const my = allRequests.filter(i => (i.Author?.Email||'').toLowerCase() === currentUser.email.toLowerCase());
+  const my = allRequests.filter(isMine);
   const s = my.map(i => getStatus(i).toLowerCase());
   animateNum('my-total', my.length);
   animateNum('my-pending', s.filter(x => x.includes('انتظار')||x.includes('wait')||x==='').length);
@@ -1301,9 +1329,7 @@ function renderMyRequests() {
 // ============ ASSIGNED ============
 function renderAssigned() {
   if (!currentUser) return;
-  const assigned = allRequests.filter(i =>
-    (i['OData__x0627__x0644__x0645__x0648__x06']||[]).some(a => (a.Email||'').toLowerCase()===currentUser.email.toLowerCase())
-  );
+  const assigned = allRequests.filter(isAssignedToMe);
   const s = assigned.map(i => getStatus(i).toLowerCase());
   animateNum('ass-total', assigned.length);
   animateNum('ass-pending', s.filter(x => !x.includes('complete')&&!x.includes('ملغي')&&!x.includes('cancel')).length);
@@ -1316,7 +1342,7 @@ function renderAssigned() {
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2)">${getDetail(i)}</td>
       <td>${i['Priority']||'Normal'}</td>
       <td>${statusBadge(getStatus(i))}${overdueTag(i)}</td>
-      <td style="font-size:12px;color:var(--muted2)">${i.Author?.DisplayName||'—'}</td>
+      <td style="font-size:12px;color:var(--muted2)">${authorName(i)}</td>
       <td>
         <div class="action-btns">
           <button class="act-btn assign" onclick="openUpdateStatus(${i.ID})">${currentLang==='ar'?'تحديث':'Update'}</button>
@@ -1425,7 +1451,7 @@ function renderCharts() {
   // technician workload (open tasks per assignee)
   const wl = {};
   items.filter(isOpen).forEach(i => {
-    const as = (i['OData__x0627__x0644__x0645__x0648__x06']||[]).map(a=>a.DisplayName);
+    const as = assigneeNames(i);
     if(!as.length) wl[t('noTech')] = (wl[t('noTech')]||0)+1;
     else as.forEach(n => wl[n] = (wl[n]||0)+1);
   });
@@ -1476,7 +1502,7 @@ function filterAll() {
 }
 function renderAllTable(items) {
   document.getElementById('all-tbody').innerHTML = items.map(i => {
-    const assignees = (i['OData__x0627__x0644__x0645__x0648__x06']||[]).map(a=>a.DisplayName).join(', ');
+    const assignees = assigneeNames(i).join(', ');
     return `<tr>
       <td><span class="id-tag">#${i.ID}</span></td>
       <td style="font-size:11px;color:var(--muted2)">${(i['Company']||'').replace('شركة ','').replace(' التجارية','')}</td>
@@ -1621,7 +1647,7 @@ function openDetail(id) {
   const finMap = {};
   allFinance.forEach(f => { if (f.OriginalRequestID) finMap[f.OriginalRequestID] = f; });
   const fin = finMap[id];
-  const assignees = (i['OData__x0627__x0644__x0645__x0648__x06'] || []).map(a => a.DisplayName).join(', ') || '—';
+  const assignees = assigneeNames(i).join(', ') || '—';
   const fullDetail = i['OData__x0627__x062e__x0628__x0631__x06'] || '—';
   const rows = [
     [t('cReqID'), '#' + i.ID],
@@ -1631,7 +1657,7 @@ function openDetail(id) {
     [t('priority'), i['Priority'] || 'Normal'],
     [t('cStatus'), getStatus(i) || t('pending')],
     [t('cAssigned'), assignees],
-    [currentLang==='ar'?'مقدّم الطلب':'Requested By', i.Author?.DisplayName || '—'],
+    [currentLang==='ar'?'مقدّم الطلب':'Requested By', authorName(i)],
     [t('cCreated'), formatDate(i.Created)]
   ];
   let html = '<div class="modal-info">' + rows.map(([k, v]) => `<div class="modal-info-row"><span class="modal-info-label">${esc(k)}</span><span class="modal-info-val">${esc(v)}</span></div>`).join('') + '</div>';
@@ -1724,7 +1750,7 @@ function printRequest(id){
   const i=allRequests.find(x=>x.ID===id); if(!i) return;
   const finMap={}; allFinance.forEach(f=>{ if(f.OriginalRequestID) finMap[f.OriginalRequestID]=f; });
   const fin=finMap[id];
-  const assignees=(i['OData__x0627__x0644__x0645__x0648__x06']||[]).map(a=>a.DisplayName).join(', ')||'—';
+  const assignees=assigneeNames(i).join(', ')||'—';
   const rtl=currentLang==='ar';
   const rows=[[t('cReqID'),'#'+i.ID],[t('cCompany'),i['Company']||'—'],[t('cBranch'),getBranch(i)],[t('cCategory'),getCategory(i)],[t('priority'),i['Priority']||'Normal'],[t('cStatus'),getStatus(i)||t('pending')],[t('cAssigned'),assignees],[t('cCreated'),formatDate(i.Created)]];
   if(fin){ rows.push([t('cCost'),(fin.Cost||'—')+(rtl?' ر.س':' SAR')]); rows.push([t('cApprovedBy'),fin.Approved_By||'—']); }
