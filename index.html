@@ -34,6 +34,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+.ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
 body {
   font-family: 'Space Grotesk', sans-serif;
@@ -162,15 +163,15 @@ body::after {
 }
 .login-title {
   position: relative; z-index: 1;
-  font-size: 28px; font-weight: 700; line-height: 1.2;
-  color: var(--text);
+  font-size: 30px; font-weight: 300; line-height: 1.25;
+  letter-spacing: 1px; color: #ffffff;
   opacity: 0; animation: titleFade 0.8s ease 0.5s forwards;
 }
 @keyframes titleFade { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
 .login-sub {
-  font-size: 14px; color: var(--muted2);
-  margin-bottom: 36px; line-height: 1.6;
+  font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.72);
+  margin-bottom: 36px; line-height: 1.7;
 }
 
 .login-divider {
@@ -774,18 +775,18 @@ tr:hover td { background: rgba(0,217,255,0.02); }
         <div class="user-avatar" id="user-initial">T</div>
         <span id="user-name">Loading...</span>
       </div>
-      <button class="hdr-btn" onclick="loadAll()">↻ Refresh</button>
+      <button class="hdr-btn" onclick="loadAll()"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg> Refresh</button>
       <button class="hdr-btn danger" onclick="signOut()">Sign out</button>
     </div>
   </div>
 
   <div class="nav">
-    <div class="nav-item active" onclick="switchTab('overview')">📊 Overview</div>
-    <div class="nav-item" onclick="switchTab('my-requests')">👤 My Requests</div>
-    <div class="nav-item" onclick="switchTab('assigned')">🔧 Assigned to Me</div>
-    <div class="nav-item" onclick="switchTab('finance')">💰 Finance</div>
-    <div class="nav-item" onclick="switchTab('charts')">📈 Analytics</div>
-    <div class="nav-item" onclick="switchTab('all')">📋 All Requests</div>
+    <div class="nav-item active" onclick="switchTab('overview')"><svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> Overview</div>
+    <div class="nav-item" onclick="switchTab('my-requests')"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg> My Requests</div>
+    <div class="nav-item" onclick="switchTab('assigned')"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg> Assigned to Me</div>
+    <div class="nav-item" onclick="switchTab('finance')"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg> Finance</div>
+    <div class="nav-item" onclick="switchTab('charts')"><svg class="ico" viewBox="0 0 24 24"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg> Analytics</div>
+    <div class="nav-item" onclick="switchTab('all')"><svg class="ico" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> All Requests</div>
   </div>
 
   <div class="main">
@@ -795,39 +796,39 @@ tr:hover td { background: rgba(0,217,255,0.02); }
       <div class="topbar">
         <div class="topbar-title">Overview <span style="font-size:13px;color:var(--muted);font-weight:400" id="overview-date"></span></div>
         <div class="topbar-actions">
-          <button class="btn btn-ghost" onclick="exportToExcel()">📥 Export</button>
+          <button class="btn btn-ghost" onclick="exportToExcel()"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg> Export</button>
           <button class="btn btn-primary" onclick="openNewRequest()">+ New Request</button>
         </div>
       </div>
 
       <div class="stats-grid">
         <div class="stat-card c1" onclick="switchTab('all')">
-          <div class="stat-icon">📋 <span class="stat-trend" style="background:rgba(0,217,255,0.1);color:var(--accent)">ALL</span></div>
+          <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> <span class="stat-trend" style="background:rgba(0,217,255,0.1);color:var(--accent)">ALL</span></div>
           <div class="stat-num" id="stat-total">—</div>
           <div class="stat-label">Total Requests</div>
         </div>
         <div class="stat-card c2">
-          <div class="stat-icon">⏳ <span class="stat-trend" style="background:rgba(255,176,32,0.1);color:var(--amber)">OPEN</span></div>
+          <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> <span class="stat-trend" style="background:rgba(255,176,32,0.1);color:var(--amber)">OPEN</span></div>
           <div class="stat-num" id="stat-pending">—</div>
           <div class="stat-label">Pending</div>
         </div>
         <div class="stat-card c3">
-          <div class="stat-icon">🔧</div>
+          <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg></div>
           <div class="stat-num" id="stat-progress">—</div>
           <div class="stat-label">In Progress</div>
         </div>
         <div class="stat-card c4">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div>
           <div class="stat-num" id="stat-done">—</div>
           <div class="stat-label">Completed</div>
         </div>
         <div class="stat-card c5" onclick="switchTab('finance')">
-          <div class="stat-icon">💰</div>
+          <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg></div>
           <div class="stat-num" id="stat-finance">—</div>
           <div class="stat-label">In Finance</div>
         </div>
         <div class="stat-card c6">
-          <div class="stat-icon">❌</div>
+          <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6"/><path d="M15 9l-6 6"/></svg></div>
           <div class="stat-num" id="stat-canceled">—</div>
           <div class="stat-label">Canceled</div>
         </div>
@@ -854,14 +855,14 @@ tr:hover td { background: rgba(0,217,255,0.02); }
     <!-- MY REQUESTS -->
     <div class="page" id="page-my-requests">
       <div class="topbar">
-        <div class="topbar-title">👤 My Requests</div>
+        <div class="topbar-title"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg> My Requests</div>
         <button class="btn btn-primary" onclick="openNewRequest()">+ New Request</button>
       </div>
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card c1"><div class="stat-icon">📋</div><div class="stat-num" id="my-total">—</div><div class="stat-label">My Total</div></div>
-        <div class="stat-card c2"><div class="stat-icon">⏳</div><div class="stat-num" id="my-pending">—</div><div class="stat-label">Pending</div></div>
-        <div class="stat-card c4"><div class="stat-icon">✅</div><div class="stat-num" id="my-done">—</div><div class="stat-label">Completed</div></div>
-        <div class="stat-card c5"><div class="stat-icon">💰</div><div class="stat-num" id="my-finance">—</div><div class="stat-label">In Finance</div></div>
+        <div class="stat-card c1"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></div><div class="stat-num" id="my-total">—</div><div class="stat-label">My Total</div></div>
+        <div class="stat-card c2"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="stat-num" id="my-pending">—</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card c4"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div><div class="stat-num" id="my-done">—</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card c5"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg></div><div class="stat-num" id="my-finance">—</div><div class="stat-label">In Finance</div></div>
       </div>
       <div class="table-card">
         <div class="table-header"><div class="table-title">My Requests</div></div>
@@ -877,12 +878,12 @@ tr:hover td { background: rgba(0,217,255,0.02); }
     <!-- ASSIGNED -->
     <div class="page" id="page-assigned">
       <div class="topbar">
-        <div class="topbar-title">🔧 Assigned to Me</div>
+        <div class="topbar-title"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg> Assigned to Me</div>
       </div>
       <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="stat-card c1"><div class="stat-icon">🔧</div><div class="stat-num" id="ass-total">—</div><div class="stat-label">Assigned</div></div>
-        <div class="stat-card c2"><div class="stat-icon">⚡</div><div class="stat-num" id="ass-pending">—</div><div class="stat-label">Action Needed</div></div>
-        <div class="stat-card c4"><div class="stat-icon">✅</div><div class="stat-num" id="ass-done">—</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card c1"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg></div><div class="stat-num" id="ass-total">—</div><div class="stat-label">Assigned</div></div>
+        <div class="stat-card c2"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8Z"/></svg></div><div class="stat-num" id="ass-pending">—</div><div class="stat-label">Action Needed</div></div>
+        <div class="stat-card c4"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div><div class="stat-num" id="ass-done">—</div><div class="stat-label">Completed</div></div>
       </div>
       <div class="table-card">
         <div class="table-header"><div class="table-title">Tasks Assigned to Me</div></div>
@@ -898,14 +899,14 @@ tr:hover td { background: rgba(0,217,255,0.02); }
     <!-- FINANCE -->
     <div class="page" id="page-finance">
       <div class="topbar">
-        <div class="topbar-title">💰 Finance Approvals</div>
-        <button class="btn btn-ghost" onclick="exportFinanceExcel()">📥 Export Finance</button>
+        <div class="topbar-title"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg> Finance Approvals</div>
+        <button class="btn btn-ghost" onclick="exportFinanceExcel()"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg> Export Finance</button>
       </div>
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card c1"><div class="stat-icon">💰</div><div class="stat-num" id="fin-total">—</div><div class="stat-label">Total</div></div>
-        <div class="stat-card c2"><div class="stat-icon">⏳</div><div class="stat-num" id="fin-waiting">—</div><div class="stat-label">Waiting</div></div>
-        <div class="stat-card c4"><div class="stat-icon">✅</div><div class="stat-num" id="fin-approved">—</div><div class="stat-label">Approved</div></div>
-        <div class="stat-card c6"><div class="stat-icon">❌</div><div class="stat-num" id="fin-rejected">—</div><div class="stat-label">Rejected</div></div>
+        <div class="stat-card c1"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg></div><div class="stat-num" id="fin-total">—</div><div class="stat-label">Total</div></div>
+        <div class="stat-card c2"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="stat-num" id="fin-waiting">—</div><div class="stat-label">Waiting</div></div>
+        <div class="stat-card c4"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div><div class="stat-num" id="fin-approved">—</div><div class="stat-label">Approved</div></div>
+        <div class="stat-card c6"><div class="stat-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6"/><path d="M15 9l-6 6"/></svg></div><div class="stat-num" id="fin-rejected">—</div><div class="stat-label">Rejected</div></div>
       </div>
       <div class="fin-summary">
         <div class="fin-item">
@@ -934,7 +935,7 @@ tr:hover td { background: rgba(0,217,255,0.02); }
 
     <!-- ANALYTICS -->
     <div class="page" id="page-charts">
-      <div class="topbar"><div class="topbar-title">📈 Analytics</div></div>
+      <div class="topbar"><div class="topbar-title"><svg class="ico" viewBox="0 0 24 24"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg> Analytics</div></div>
       <div class="charts-grid">
         <div class="chart-card">
           <div class="chart-header">Status Distribution</div>
@@ -958,10 +959,10 @@ tr:hover td { background: rgba(0,217,255,0.02); }
     <!-- ALL -->
     <div class="page" id="page-all">
       <div class="topbar">
-        <div class="topbar-title">📋 All Requests</div>
+        <div class="topbar-title"><svg class="ico" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg> All Requests</div>
         <div class="topbar-actions">
           <button class="btn btn-ghost" onclick="clearFilters()">✕ Clear</button>
-          <button class="btn btn-ghost" onclick="exportToExcel()">📥 Export</button>
+          <button class="btn btn-ghost" onclick="exportToExcel()"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg> Export</button>
           <button class="btn btn-primary" onclick="openNewRequest()">+ New</button>
         </div>
       </div>
@@ -1016,7 +1017,7 @@ tr:hover td { background: rgba(0,217,255,0.02); }
 <!-- MODAL: Update Status -->
 <div class="modal-overlay" id="modal-status">
   <div class="modal">
-    <div class="modal-title">🔄 Update Status</div>
+    <div class="modal-title"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg> Update Status</div>
     <div class="modal-body">
       <div class="modal-info" id="modal-status-info"></div>
       <div class="modal-label">New Status</div>
@@ -1090,7 +1091,7 @@ tr:hover td { background: rgba(0,217,255,0.02); }
 <!-- MODAL: Detail -->
 <div class="modal-overlay" id="modal-detail">
   <div class="modal" style="max-width:560px">
-    <div class="modal-title">📄 Request Details</div>
+    <div class="modal-title"><svg class="ico" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg> Request Details</div>
     <div class="modal-body" id="modal-detail-body"></div>
     <div class="modal-footer">
       <a id="detail-sp-link" href="#" target="_blank" class="btn btn-ghost">Open in SharePoint ↗</a>
@@ -1283,7 +1284,7 @@ function financeBadge(s) {
 function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function viewBtn(id) {
-  return `<button class="view-btn" onclick="openDetail(${id})">👁 View</button>`;
+  return `<button class="view-btn" onclick="openDetail(${id})"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> View</button>`;
 }
 
 // ============ TABS ============
@@ -1320,7 +1321,7 @@ function renderOverview() {
   const companies = {
     'شركة سواج التجارية': {name:'Swag',icon:'🔴',color:'var(--accent)',items:[]},
     'شركة لاروش التجارية': {name:'LaRoche',icon:'🟡',color:'var(--purple)',items:[]},
-    'شركة لروش جولد': {name:'Gold ⭐',icon:'⭐',color:'var(--gold)',items:[]}
+    'شركة لروش جولد': {name:'Gold <svg class="ico" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>',icon:'<svg class="ico" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>',color:'var(--gold)',items:[]}
   };
   items.forEach(i => { const c=i['Company']||''; if(companies[c]) companies[c].items.push(i); });
 
@@ -1352,7 +1353,7 @@ function renderOverview() {
       <td>${statusBadge(getStatus(i))}</td>
       <td style="color:var(--muted);font-size:12px">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
-    </tr>`).join('') || '<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div>No data</div></td></tr>';
+    </tr>`).join('') || '<tr><td colspan="7"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5 5h14l3 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></svg></div>No data</div></td></tr>';
 }
 
 function animateNum(id, target) {
@@ -1395,7 +1396,7 @@ function renderMyRequests() {
       <td style="color:var(--muted);font-size:12px">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon">📭</div>No requests yet</div></td></tr>';
+  }).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5 5h14l3 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></svg></div>No requests yet</div></td></tr>';
 }
 
 // ============ ASSIGNED ============
@@ -1424,7 +1425,7 @@ function renderAssigned() {
           ${viewBtn(i.ID)}
         </div>
       </td>
-    </tr>`).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔧</div>Nothing assigned to you</div></td></tr>';
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg></div>Nothing assigned to you</div></td></tr>';
 }
 
 // ============ FINANCE ============
@@ -1464,7 +1465,7 @@ function renderFinance() {
           <a href="${SP_F}/Lists/Finance%20purchase%20approvals/DispForm.aspx?ID=${f.ID}" target="_blank" class="view-btn">Open ↗</a>
         </div>
       </td>
-    </tr>`).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon">💰</div>No finance records</div></td></tr>';
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg></div>No finance records</div></td></tr>';
 }
 
 // ============ CHARTS ============
@@ -1589,7 +1590,7 @@ function renderAllTable(items) {
       <td style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="10"><div class="empty"><div class="empty-icon">🔍</div>No results</div></td></tr>';
+  }).join('') || '<tr><td colspan="10"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>No results</div></td></tr>';
 }
 
 function renderPagination(total, filtered) {
@@ -1664,7 +1665,7 @@ async function submitStatusUpdate() {
     });
 
     if(r.ok || r.status===204) {
-      toast(`✅ Status updated to: ${newStatus}`, 'success');
+      toast(`<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> Status updated to: ${newStatus}`, 'success');
       closeModal('modal-status');
       await loadAll();
     } else {
@@ -1743,7 +1744,7 @@ async function submitNewRequest() {
     });
     const d = await r.json();
     if(d.d?.ID) {
-      toast(`✅ Request #${d.d.ID} submitted!`, 'success');
+      toast(`<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> Request #${d.d.ID} submitted!`, 'success');
       closeModal('modal-new');
       await loadAll();
     } else {
@@ -1838,7 +1839,7 @@ async function financeAction(finId, action) {
     });
 
     if (r.ok || r.status === 204) {
-      toast(`✅ Finance #${finId} ${newStatus}`, 'success');
+      toast(`<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> Finance #${finId} ${newStatus}`, 'success');
       await loadAll();
     } else {
       toast(`Failed to ${action} (${r.status})`, 'error');
@@ -1867,7 +1868,7 @@ function exportToExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Maintenance');
   XLSX.writeFile(wb, `Swag_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast('📥 Exported!', 'success');
+  toast('<svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg> Exported!', 'success');
 }
 
 function exportFinanceExcel() {
@@ -1876,7 +1877,7 @@ function exportFinanceExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Finance');
   XLSX.writeFile(wb, `Finance_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast('📥 Finance exported!', 'success');
+  toast('<svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg> Finance exported!', 'success');
 }
 
 function toast(msg, type='info') {
@@ -1884,7 +1885,7 @@ function toast(msg, type='info') {
   if(!wrap) return;
   const t = document.createElement('div');
   t.className = `toast ${type}`;
-  const icon = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  const icon = type==='success'?'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>':type==='error'?'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6"/><path d="M15 9l-6 6"/></svg>':'ℹ️';
   t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
   wrap.appendChild(t);
   setTimeout(() => {
