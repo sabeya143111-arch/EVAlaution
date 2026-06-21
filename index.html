@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Swag Maintenance Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.4.0/lib/msal-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   --bg: #0F0F0F;
@@ -154,6 +156,61 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .finance-row-val { font-weight: 700; font-size: 16px; }
 
 .last-updated { font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 8px; }
+
+/* FILTERS */
+.filters-bar {
+  display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.filter-select, .filter-input {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 12px;
+  padding: 8px 12px; outline: none; min-width: 140px;
+}
+.filter-select:focus, .filter-input:focus { border-color: rgba(232,255,71,0.4); }
+.filter-btn {
+  background: var(--accent); border: none; border-radius: 8px;
+  color: #0F0F0F; font-size: 12px; font-weight: 600;
+  padding: 8px 16px; cursor: pointer; margin-top: 14px;
+}
+.filter-btn.clear { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.export-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 12px;
+  padding: 8px 14px; cursor: pointer; display: flex;
+  align-items: center; gap: 6px; margin-left: auto;
+}
+.export-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* CHARTS */
+.charts-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px;
+}
+.chart-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.chart-wrap { position: relative; height: 200px; }
+
+/* SEARCH BAR */
+.global-search {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text); font-size: 14px;
+  padding: 12px 16px 12px 44px; outline: none; margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.global-search:focus { border-color: rgba(232,255,71,0.4); }
+.global-search-wrap { position: relative; }
+.global-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+
+/* PAGINATION */
+.pagination { display: flex; gap: 8px; justify-content: center; margin-top: 16px; align-items: center; }
+.page-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; padding: 6px 12px; cursor: pointer; }
+.page-btn.active { background: var(--accent); color: #0F0F0F; border-color: var(--accent); }
+.page-info { font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -198,6 +255,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     <div class="tab" onclick="switchTab('my-requests')">👤 My Requests</div>
     <div class="tab" onclick="switchTab('assigned')">🔧 Assigned to Me</div>
     <div class="tab" onclick="switchTab('finance')">💰 Finance</div>
+    <div class="tab" onclick="switchTab('charts')">📈 Charts</div>
     <div class="tab" onclick="switchTab('all')">📋 All Requests</div>
   </div>
 
@@ -258,13 +316,71 @@ tr:hover td { background: rgba(255,255,255,0.02); }
       <div class="table-wrap"><table><thead><tr><th>Finance ID</th><th>Request ID</th><th>Branch</th><th>Category</th><th>Cost</th><th>Billing Status</th><th>Approved By</th><th></th></tr></thead><tbody id="finance-tbody"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
     </div>
 
+    <!-- CHARTS -->
+    <div class="page" id="page-charts">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">📊 Status Distribution</div>
+          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🏢 Company Breakdown</div>
+          <div class="chart-wrap"><canvas id="chart-company"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📅 Requests by Month</div>
+          <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🔴 Priority Distribution</div>
+          <div class="chart-wrap"><canvas id="chart-priority"></canvas></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ALL -->
     <div class="page" id="page-all">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" id="all-search" placeholder="Search..." oninput="filterAll()"/>
+      <div class="filters-bar">
+        <div class="filter-group">
+          <div class="filter-label">Search</div>
+          <div class="global-search-wrap" style="position:relative">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%)">🔍</span>
+            <input class="filter-input" id="all-search" placeholder="ID, category, branch..." oninput="filterAll()" style="padding-left:32px;min-width:200px"/>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Company</div>
+          <select class="filter-select" id="filter-company" onchange="filterAll()">
+            <option value="">All Companies</option>
+            <option value="سواج">Swag</option>
+            <option value="لاروش">LaRoche</option>
+            <option value="جولد">Gold</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">Status</div>
+          <select class="filter-select" id="filter-status" onchange="filterAll()">
+            <option value="">All Status</option>
+            <option value="انتظار">Pending</option>
+            <option value="transcation">Finance</option>
+            <option value="complete">Completed</option>
+            <option value="ملغي">Canceled</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">From Date</div>
+          <input type="date" class="filter-input" id="filter-from" onchange="filterAll()"/>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">To Date</div>
+          <input type="date" class="filter-input" id="filter-to" onchange="filterAll()"/>
+        </div>
+        <button class="filter-btn clear" onclick="clearFilters()">✕ Clear</button>
+        <button class="export-btn" onclick="exportToExcel()">📥 Export Excel</button>
       </div>
+      <div id="all-results-info" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
       <div class="table-wrap"><table><thead><tr><th>ID</th><th>Company</th><th>Branch</th><th>Category</th><th>Detail</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Created</th><th></th></tr></thead><tbody id="all-tbody"><tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
+      <div class="pagination" id="all-pagination"></div>
     </div>
   </div>
 </div>
@@ -566,6 +682,298 @@ window.onload = async () => {
 };
 
 setInterval(loadAll, 120000);
+
+// ============ CHARTS ============
+let chartInstances = {};
+
+function renderCharts() {
+  const items = allRequests;
+  if (!items.length) return;
+
+  // Destroy existing charts
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+
+  const chartDefaults = {
+    plugins: { legend: { labels: { color: '#F5F5F5', font: { size: 11 } } } }
+  };
+
+  // Status chart
+  const statuses = {};
+  items.forEach(i => {
+    const s = getStatus(i) || 'Pending';
+    const key = s.includes('انتظار') || s === '' ? 'Pending' :
+                s === 'transcation' ? 'Finance' :
+                s.includes('complete') ? 'Completed' :
+                s.includes('ملغي') ? 'Canceled' : s;
+    statuses[key] = (statuses[key] || 0) + 1;
+  });
+
+  const ctx1 = document.getElementById('chart-status');
+  if (ctx1) {
+    chartInstances.status = new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statuses),
+        datasets: [{
+          data: Object.values(statuses),
+          backgroundColor: ['#FFB547','#B47FFF','#4AFF8A','#FF4D4D','#47C8FF','#E8FF47'],
+          borderWidth: 0
+        }]
+      },
+      options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+    });
+  }
+
+  // Company chart
+  const companies = { 'Swag': 0, 'LaRoche': 0, 'Gold': 0 };
+  items.forEach(i => {
+    const c = i['Company'] || '';
+    if (c.includes('سواج')) companies['Swag']++;
+    else if (c.includes('لاروش')) companies['LaRoche']++;
+    else if (c.includes('جولد') || c.includes('Gold')) companies['Gold']++;
+  });
+
+  const ctx2 = document.getElementById('chart-company');
+  if (ctx2) {
+    chartInstances.company = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(companies),
+        datasets: [{
+          label: 'Requests',
+          data: Object.values(companies),
+          backgroundColor: ['#47C8FF','#B47FFF','#FFB547'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        ...chartDefaults, responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { ticks: { color: '#6B6B6B' }, grid: { color: '#2E2E2E' } },
+          x: { ticks: { color: '#6B6B6B' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Monthly chart
+  const monthly = {};
+  items.forEach(i => {
+    if (!i.Created) return;
+    const month = new Date(i.Created).toLocaleDateString('en-GB', {month:'short', year:'2-digit'});
+    monthly[month] = (monthly[month] || 0) + 1;
+  });
+  const sortedMonths = Object.keys(monthly).slice(-6);
+
+  const ctx3 = document.getElementById('chart-monthly');
+  if (ctx3) {
+    chartInstances.monthly = new Chart(ctx3, {
+      type: 'line',
+      data: {
+        labels: sortedMonths,
+        datasets: [{
+          label: 'Requests',
+          data: sortedMonths.map(m => monthly[m] || 0),
+          borderColor: '#E8FF47',
+          backgroundColor: 'rgba(232,255,71,0.1)',
+          fill: true, tension: 0.4, pointBackgroundColor: '#E8FF47'
+        }]
+      },
+      options: {
+        ...chartDefaults, responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { ticks: { color: '#6B6B6B' }, grid: { color: '#2E2E2E' } },
+          x: { ticks: { color: '#6B6B6B' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Priority chart
+  const priorities = { 'Urgent': 0, 'High': 0, 'Normal': 0, 'Low': 0 };
+  items.forEach(i => {
+    const p = i['Priority'] || 'Normal';
+    if (priorities[p] !== undefined) priorities[p]++;
+    else priorities['Normal']++;
+  });
+
+  const ctx4 = document.getElementById('chart-priority');
+  if (ctx4) {
+    chartInstances.priority = new Chart(ctx4, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(priorities),
+        datasets: [{
+          data: Object.values(priorities),
+          backgroundColor: ['#FF4D4D','#FFB547','#E8FF47','#4AFF8A'],
+          borderWidth: 0
+        }]
+      },
+      options: { ...chartDefaults, responsive: true, maintainAspectRatio: false }
+    });
+  }
+}
+
+// ============ FILTERS & SEARCH ============
+let currentPage = 1;
+const PAGE_SIZE = 20;
+
+function filterAll() {
+  const q = (document.getElementById('all-search')?.value || '').toLowerCase();
+  const company = document.getElementById('filter-company')?.value || '';
+  const status = document.getElementById('filter-status')?.value || '';
+  const fromDate = document.getElementById('filter-from')?.value;
+  const toDate = document.getElementById('filter-to')?.value;
+
+  let filtered = allRequests.filter(i => {
+    // Search
+    const matchQ = !q || String(i.ID).includes(q) ||
+      getCategory(i).toLowerCase().includes(q) ||
+      getBranch(i).toLowerCase().includes(q) ||
+      getDetail(i).toLowerCase().includes(q) ||
+      (i['Company'] || '').toLowerCase().includes(q);
+
+    // Company filter
+    const matchCompany = !company || (i['Company'] || '').includes(company);
+
+    // Status filter
+    const matchStatus = !status || getStatus(i).toLowerCase().includes(status);
+
+    // Date filter
+    const created = i.Created ? new Date(i.Created) : null;
+    const matchFrom = !fromDate || (created && created >= new Date(fromDate));
+    const matchTo = !toDate || (created && created <= new Date(toDate + 'T23:59:59'));
+
+    return matchQ && matchCompany && matchStatus && matchFrom && matchTo;
+  });
+
+  // Update results info
+  const info = document.getElementById('all-results-info');
+  if (info) info.textContent = `Showing ${Math.min(filtered.length, PAGE_SIZE * currentPage)} of ${filtered.length} results`;
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const paginated = filtered.slice(start, start + PAGE_SIZE);
+
+  renderAllTable(paginated);
+  renderPagination(totalPages, filtered);
+}
+
+function renderAllTable(items) {
+  document.getElementById('all-tbody').innerHTML = items.map(i => {
+    const assignees = (i['OData__x0627__x0644__x0645__x0648__x06'] || []).map(a => a.DisplayName).join(', ');
+    return `<tr>
+      <td><span class="id-badge">#${i.ID}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${(i['Company']||'').replace('شركة ','').replace(' التجارية','')}</td>
+      <td>${getBranch(i)}</td>
+      <td>${getCategory(i)}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${getDetail(i)}</td>
+      <td>${i['Priority']||'Normal'}</td>
+      <td>${statusBadge(getStatus(i))}</td>
+      <td style="font-size:12px">${assignees||'—'}</td>
+      <td>${formatDate(i.Created)}</td>
+      <td>${dispLink(i.ID)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:32px">No results found</td></tr>';
+}
+
+function renderPagination(totalPages, filtered) {
+  const pg = document.getElementById('all-pagination');
+  if (!pg || totalPages <= 1) { if(pg) pg.innerHTML = ''; return; }
+
+  let html = `<span class="page-info">${totalPages} pages</span>`;
+  for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+  }
+  if (totalPages > 5) html += `<span class="page-info">...</span>`;
+  pg.innerHTML = html;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  filterAll();
+}
+
+function clearFilters() {
+  document.getElementById('all-search').value = '';
+  document.getElementById('filter-company').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value = '';
+  currentPage = 1;
+  filterAll();
+}
+
+// ============ EXPORT TO EXCEL ============
+function exportToExcel() {
+  const q = (document.getElementById('all-search')?.value || '').toLowerCase();
+  const company = document.getElementById('filter-company')?.value || '';
+  const status = document.getElementById('filter-status')?.value || '';
+
+  let filtered = allRequests.filter(i => {
+    const matchQ = !q || String(i.ID).includes(q) || getCategory(i).toLowerCase().includes(q);
+    const matchCompany = !company || (i['Company'] || '').includes(company);
+    const matchStatus = !status || getStatus(i).toLowerCase().includes(status);
+    return matchQ && matchCompany && matchStatus;
+  });
+
+  const data = filtered.map(i => ({
+    'ID': i.ID,
+    'Company': i['Company'] || '',
+    'Branch': getBranch(i),
+    'Category': getCategory(i),
+    'Details': i['OData__x0627__x062e__x0628__x0631__x06'] || '',
+    'Priority': i['Priority'] || 'Normal',
+    'Status': getStatus(i),
+    'Assigned To': (i['OData__x0627__x0644__x0645__x0648__x06'] || []).map(a => a.DisplayName).join(', '),
+    'Finance Assigned': i['Finance_x0020_Assigned'] || '',
+    'Cost': i['Cost'] || '',
+    'Vendor': i['Vendor'] || '',
+    'Created': formatDate(i.Created),
+    'Modified': formatDate(i.Modified)
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Requests');
+
+  // Also add finance sheet
+  if (allFinance.length) {
+    const finData = allFinance.map(f => ({
+      'Finance ID': f.ID,
+      'Request ID': f.OriginalRequestID || '',
+      'Branch': f.Branch || '',
+      'Category': f.cateogry || '',
+      'Cost (SAR)': f.Cost || '',
+      'Billing Status': f['Billing_x0020_status']?.Value || '',
+      'Approved By': f.Approved_By || '',
+      'Vendor': f.Vendor_x0020_name || ''
+    }));
+    const ws2 = XLSX.utils.json_to_sheet(finData);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Finance');
+  }
+
+  XLSX.writeFile(wb, `Swag_Maintenance_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// Update switchTab to include charts
+const origSwitchTab = switchTab;
+function switchTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  const tabs = ['overview','my-requests','assigned','finance','charts','all'];
+  document.querySelectorAll('.tab')[tabs.indexOf(t)]?.classList.add('active');
+  document.getElementById('page-' + t)?.classList.add('active');
+  if (t === 'overview') renderOverview();
+  else if (t === 'my-requests') renderMyRequests();
+  else if (t === 'assigned') renderAssigned();
+  else if (t === 'finance') renderFinance();
+  else if (t === 'charts') renderCharts();
+  else if (t === 'all') { currentPage = 1; filterAll(); }
+}
 </script>
 </body>
 </html>
