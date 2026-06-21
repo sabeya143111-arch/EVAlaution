@@ -230,6 +230,9 @@ body::after {
 
 .header-logo { display: flex; align-items: center; }
 .header-logo img { height: 28px; width: auto; display: block; }
+.uname-wrap { position: relative; display: inline-block; }
+.uname-ul { position: absolute; left: 0; right: 0; bottom: -6px; width: 100%; height: 8px; overflow: visible; pointer-events: none; }
+#uname-path { transition: stroke-dashoffset 1.4s ease-in-out, d 0.5s ease; }
 
 .header-brand {
   font-family: 'Space Mono', monospace;
@@ -767,7 +770,12 @@ tr:hover td { background: rgba(0,217,255,0.02); }
     <div class="header-right">
       <div class="user-chip">
         <div class="user-avatar" id="user-initial">T</div>
-        <span id="user-name">Loading...</span>
+        <span class="uname-wrap" onmouseenter="nameHover(true)" onmouseleave="nameHover(false)">
+          <span id="user-name">Loading...</span>
+          <svg class="uname-ul" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
+            <path id="uname-path" d="M 0,10 Q 75,0 150,10 Q 225,20 300,10" stroke="var(--gold)" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </svg>
+        </span>
       </div>
       <button class="hdr-btn" onclick="loadAll()"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg> Refresh</button>
       <button class="hdr-btn danger" onclick="signOut()">Sign out</button>
@@ -1161,11 +1169,33 @@ async function signIn() {
   }
 }
 
+function animateName() {
+  const path = document.getElementById('uname-path');
+  if (!path) return;
+  const L = 320;
+  path.style.strokeDasharray = L;
+  path.style.transition = 'none';
+  path.style.strokeDashoffset = L;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    path.style.transition = 'stroke-dashoffset 1.4s ease-in-out, d 0.5s ease';
+    path.style.strokeDashoffset = '0';
+  }));
+}
+
+function nameHover(on) {
+  const p = document.getElementById('uname-path');
+  if (!p) return;
+  p.setAttribute('d', on
+    ? 'M 0,10 Q 75,20 150,10 Q 225,0 300,10'
+    : 'M 0,10 Q 75,0 150,10 Q 225,20 300,10');
+}
+
 function setUser(account, token) {
   currentUser = { name: account.name, email: account.username };
   accessToken = token;
   document.getElementById('user-name').textContent = currentUser.name;
   document.getElementById('user-initial').textContent = currentUser.name.charAt(0).toUpperCase();
+  animateName();
 }
 
 async function getToken() {
