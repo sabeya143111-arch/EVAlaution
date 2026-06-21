@@ -300,7 +300,10 @@ async function initMsal() {
   };
   msalInstance = new msal.PublicClientApplication(msalConfig);
 }
-const scopes = ['https://netorg20570594.sharepoint.com/.default'];
+const scopes = [
+  'https://netorg20570594.sharepoint.com/AllSites.Read',
+  'User.Read'
+];
 
 let currentUser = null;
 let accessToken = null;
@@ -371,23 +374,36 @@ async function loadAll() {
   }
 }
 
-function getStatus(i) { return i['OData__x062d__x0627__x0644__x0629__x06']?.Value || ''; }
-function getCategory(i) { return i['OData__x0646__x0648__x0639__x0627__x06']?.Value || '—'; }
-function getBranch(i) {
-  const c = i['Company']?.Value || '';
-  if (c.includes('سواج')) return i['OData__x0627__x062e__x062a__x0631__x06']?.Value || '—';
-  if (c.includes('لاروش')) return i['LaRoche']?.Value || '—';
-  return i['Gold']?.Value || '—';
+function getStatus(i) { 
+  // Exact column name from API: OData__x062d__x0627__x0644__x0629__x06 (string not object)
+  return i['OData__x062d__x0627__x0644__x0629__x06'] || ''; 
 }
-function getDetail(i) { const d = i['OData__x0627__x062e__x0628__x0631__x06'] || ''; return d.length > 35 ? d.substring(0,35)+'...' : d; }
+function getCategory(i) { 
+  // Exact column name: OData__x0646__x0648__x0639__x0627__x06 (string)
+  return i['OData__x0646__x0648__x0639__x0627__x06'] || '—'; 
+}
+function getBranch(i) {
+  const c = i['Company'] || '';
+  const swag = i['OData__x0627__x062e__x062a__x0631__x06'];
+  const laroche = i['LaRoche'];
+  const gold = i['Gold'];
+  if (c.includes('سواج') && swag) return swag;
+  if (c.includes('لاروش') && laroche) return laroche;
+  if (gold) return gold;
+  return swag || laroche || '—';
+}
+function getDetail(i) { 
+  const d = i['OData__x0627__x062e__x0628__x0631__x06'] || ''; 
+  return d.length > 35 ? d.substring(0,35)+'...' : d; 
+}
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—'; }
 
 function statusBadge(s) {
   const v = (s||'').toLowerCase();
-  if (!s || v.includes('wait')) return `<span class="badge b-waiting">${s||'Pending'}</span>`;
-  if (v === 'transcation') return `<span class="badge b-transcation">${s}</span>`;
-  if (v === 'complete') return `<span class="badge b-done">${s}</span>`;
-  if (v === 'canceled') return `<span class="badge b-rejected">${s}</span>`;
+  if (!s || v.includes('wait') || v.includes('انتظار')) return `<span class="badge b-waiting">${s||'Pending'}</span>`;
+  if (v === 'transcation' || v.includes('transaction')) return `<span class="badge b-transcation">${s}</span>`;
+  if (v === 'complete' || v.includes('complete')) return `<span class="badge b-done">${s}</span>`;
+  if (v.includes('ملغي') || v.includes('cancel')) return `<span class="badge b-rejected">${s}</span>`;
   return `<span class="badge b-progress">${s}</span>`;
 }
 
@@ -426,18 +442,18 @@ function renderOverview() {
   const items = allRequests;
   const s = items.map(i => getStatus(i).toLowerCase());
   document.getElementById('stat-total').textContent = items.length;
-  document.getElementById('stat-pending').textContent = s.filter(x => x.includes('wait')||x==='').length;
-  document.getElementById('stat-progress').textContent = s.filter(x => !['','complete','canceled','transcation'].includes(x)&&!x.includes('wait')).length;
-  document.getElementById('stat-done').textContent = s.filter(x => x==='complete').length;
+  document.getElementById('stat-pending').textContent = s.filter(x => x.includes('wait')||x.includes('انتظار')||x==='').length;
+  document.getElementById('stat-progress').textContent = s.filter(x => !['','transcation'].includes(x)&&!x.includes('wait')&&!x.includes('انتظار')&&!x.includes('complete')&&!x.includes('ملغي')&&!x.includes('cancel')).length;
+  document.getElementById('stat-done').textContent = s.filter(x => x.includes('complete')).length;
   document.getElementById('stat-finance').textContent = s.filter(x => x==='transcation').length;
-  document.getElementById('stat-canceled').textContent = s.filter(x => x==='canceled').length;
+  document.getElementById('stat-canceled').textContent = s.filter(x => x.includes('ملغي')||x.includes('cancel')).length;
 
   const companies = {
     'شركة سواج التجارية': {name:'Swag 🔴', items:[], color:'var(--blue)'},
     'شركة لاروش التجارية': {name:'LaRoche 🟡', items:[], color:'var(--purple)'},
     'شركة لروش جولد': {name:'Gold ⭐', items:[], color:'var(--amber)'}
   };
-  items.forEach(i => { const c = i['Company']?.Value||''; if(companies[c]) companies[c].items.push(i); });
+  items.forEach(i => { const c = i['Company']||''; if(companies[c]) companies[c].items.push(i); });
   
   document.getElementById('company-grid').innerHTML = Object.entries(companies).map(([k,c]) => {
     const total = c.items.length;
@@ -462,7 +478,7 @@ function renderOverview() {
 
 function renderMyRequests() {
   if (!currentUser) return;
-  const my = allRequests.filter(i => i.Author?.Email?.toLowerCase() === currentUser.email.toLowerCase());
+  const my = allRequests.filter(i => (i.Author?.Email||i.AuthorEmail||'').toLowerCase() === currentUser.email.toLowerCase());
   const s = my.map(i => getStatus(i).toLowerCase());
   document.getElementById('my-total').textContent = my.length;
   document.getElementById('my-pending').textContent = s.filter(x => x.includes('wait')||x==='').length;
@@ -512,9 +528,9 @@ function renderFinance() {
   document.getElementById('fin-rejected-amount').textContent = rejectedAmt.toLocaleString()+' SAR';
   document.getElementById('finance-tbody').innerHTML = fin.map(f => `
     <tr><td><span class="id-badge">#${f.ID}</span></td><td><span class="id-badge">#${f.OriginalRequestID||'—'}</span></td>
-    <td>${f.Branch||'—'}</td><td>${f.cateogry||'—'}</td><td><strong>${f.Cost||'—'} SAR</strong></td>
-    <td>${financeBadge(f['Billing_x0020_status']?.Value)}</td>
-    <td style="font-size:11px;color:var(--muted)">${f.Approved_By||'—'}</td><td>${finLink(f.ID)}</td></tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No finance records</td></tr>';
+    <td>${f.Branch||f.branch||'—'}</td><td>${f.cateogry||f.category||'—'}</td><td><strong>${f.Cost||'—'} SAR</strong></td>
+    <td>${financeBadge(f['Billing_x0020_status']?.Value||f.BillingStatus||'')}</td>
+    <td style="font-size:11px;color:var(--muted)">${f.Approved_By||f.ApprovedBy||'—'}</td><td>${finLink(f.ID)}</td></tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No finance records</td></tr>';
 }
 
 function filterAll() {
