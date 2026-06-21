@@ -277,16 +277,19 @@ const SP_F = 'https://netorg20570594.sharepoint.com/sites/msteams_01c3e9';
 const LIST_M = 'da8027dc-c155-4694-8d0d-8c862326de47';
 const LIST_F = '20fdeb86-c734-467d-8d61-06bb5a4bf956';
 
-const msalConfig = {
-  auth: {
-    clientId: CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    redirectUri: window.location.origin + window.location.pathname
-  },
-  cache: { cacheLocation: 'sessionStorage' }
-};
+let msalInstance = null;
 
-const msalInstance = new msal.PublicClientApplication(msalConfig);
+function initMsal() {
+  const msalConfig = {
+    auth: {
+      clientId: CLIENT_ID,
+      authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+      redirectUri: window.location.origin + window.location.pathname
+    },
+    cache: { cacheLocation: 'sessionStorage' }
+  };
+  msalInstance = new msal.PublicClientApplication(msalConfig);
+}
 const scopes = ['https://netorg20570594.sharepoint.com/.default'];
 
 let currentUser = null;
@@ -520,6 +523,7 @@ function filterAll() {
 
 // Check if already logged in
 window.onload = async () => {
+  initMsal();
   await msalInstance.initialize();
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
