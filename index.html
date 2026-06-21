@@ -128,6 +128,7 @@ body::after {
 
 /* WHITE BADGE + GOLD LOGO */
 .login-logo-wrap {
+  position: relative;
   background: #ffffff;
   border-radius: 22px;
   padding: 18px 24px;
@@ -135,7 +136,9 @@ body::after {
   margin: 0 auto 26px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.45), 0 0 44px rgba(212,168,75,0.18);
 }
-.login-logo-wrap img { height: 66px; width: auto; display: block; }
+.login-logo-wrap img { height: 66px; width: auto; display: block; position: relative; z-index: 2; }
+.logo-particle { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--gold); opacity: 0.35; pointer-events: none; z-index: 1; box-shadow: 0 0 6px var(--gold); transition: transform 0.7s cubic-bezier(.34,1.56,.64,1), opacity 0.4s ease; }
+.login-logo-wrap:hover .logo-particle { opacity: 1; }
 
 .login-brand {
   font-family: 'Space Mono', monospace;
@@ -144,16 +147,15 @@ body::after {
   margin-bottom: 12px;
 }
 
+.login-title-wrap { position: relative; display: inline-block; padding: 14px 34px; margin-bottom: 8px; }
+.hw-svg { position: absolute; top: -16px; left: -10px; right: -10px; bottom: -16px; width: auto; height: auto; overflow: visible; pointer-events: none; z-index: 0; }
 .login-title {
-  font-size: 28px; font-weight: 700;
-  line-height: 1.2; margin-bottom: 8px;
-  background: linear-gradient(135deg, #fff 0%, rgba(0,217,255,0.55) 22%, rgba(139,92,246,0.5) 42%, #fff 55%, rgba(0,217,255,0.4) 75%, #fff 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  -webkit-text-stroke: 0.4px rgba(255,255,255,0.12);
-  animation: titleShimmer 6s linear infinite;
+  position: relative; z-index: 1;
+  font-size: 28px; font-weight: 700; line-height: 1.2;
+  color: var(--text);
+  opacity: 0; animation: titleFade 0.8s ease 0.5s forwards;
 }
-@keyframes titleShimmer { 0% { background-position: 200% center; } 100% { background-position: 0% center; } }
+@keyframes titleFade { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
 .login-sub {
   font-size: 14px; color: var(--muted2);
@@ -195,7 +197,7 @@ body::after {
 
 @media (prefers-reduced-motion: reduce) {
   .login-grid-lines { animation: none; }
-  .login-title { animation: none; }
+  .login-title { animation: none; opacity: 1; }
 }
 /* =================== END LOGIN (UPDATED) =================== */
 
@@ -726,7 +728,12 @@ tr:hover td { background: rgba(0,217,255,0.02); }
   <div class="login-card">
     <div class="login-logo-wrap"><img src="LOGO_PLACEHOLDER" alt="SWAG"/></div>
     <div class="login-brand">Swag Group</div>
-    <div class="login-title">Maintenance<br>Control Center</div>
+    <div class="login-title-wrap">
+      <svg class="hw-svg" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden="true">
+        <path id="hw-path" d="M 950 90 C 1250 300, 1050 480, 600 520 C 250 520, 150 480, 150 300 C 150 120, 350 80, 600 80 C 850 80, 950 180, 950 180" fill="none" stroke="#D4A84B" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="login-title">Maintenance<br>Control Center</div>
+    </div>
     <div class="login-divider"></div>
     <div class="login-sub">Sign in with your Microsoft account to access the maintenance management dashboard.</div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">
@@ -1900,8 +1907,48 @@ function initMagnetButton() {
   btn.addEventListener('touchend', release);
 }
 
+function initMagnetLogo() {
+  const zone = document.querySelector('.login-logo-wrap');
+  if (!zone || zone.dataset.magnet) return;
+  zone.dataset.magnet = '1';
+  const N = 12, range = 70;
+  const parts = [];
+  for (let i = 0; i < N; i++) {
+    const p = document.createElement('span');
+    p.className = 'logo-particle';
+    const x = Math.random() * range * 2 - range;
+    const y = Math.random() * range * 2 - range;
+    p.dataset.x = x; p.dataset.y = y;
+    p.style.transform = `translate(${x}px, ${y}px)`;
+    zone.appendChild(p);
+    parts.push(p);
+  }
+  const attract = () => parts.forEach(p => p.style.transform = 'translate(0, 0)');
+  const release = () => parts.forEach(p => p.style.transform = `translate(${p.dataset.x}px, ${p.dataset.y}px)`);
+  zone.addEventListener('mouseenter', attract);
+  zone.addEventListener('mouseleave', release);
+  zone.addEventListener('touchstart', attract, { passive: true });
+  zone.addEventListener('touchend', release);
+}
+
+function initHandwriting() {
+  const path = document.getElementById('hw-path');
+  if (!path) return;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const len = path.getTotalLength();
+  path.style.strokeDasharray = len;
+  if (reduce) { path.style.strokeDashoffset = 0; return; }
+  path.style.strokeDashoffset = len;
+  requestAnimationFrame(() => {
+    path.style.transition = 'stroke-dashoffset 2.5s cubic-bezier(0.43,0.13,0.23,0.96)';
+    path.style.strokeDashoffset = '0';
+  });
+}
+
 window.onload = async () => {
   initMagnetButton();
+  initMagnetLogo();
+  initHandwriting();
   await initMsal();
   if(!msalInstance) return;
   await msalInstance.initialize();
