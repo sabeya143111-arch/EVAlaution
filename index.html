@@ -1640,5 +1640,96 @@ async function submitNewRequest() {
       headers:{
         'Accept':'application/json;odata=verbose',
         'Content-Type':'application/json;odata=verbose',
+        'Authorization':`Bearer ${accessToken}`,
+        'X-RequestDigest':digest
+      },
+      body:JSON.stringify(body)
+    });
+    const d = await r.json();
+    if(d.d?.ID) {
+      toast(`✅ Request #${d.d.ID} submitted!`, 'success');
+      closeModal('modal-new');
+      await loadAll();
+    } else {
+      toast('Submit failed', 'error');
+    }
+  } catch(e) {
+    toast('Error: '+e.message, 'error');
+  } finally {
+    btn.disabled=false;
+    btn.textContent='Submit Request';
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id)?.classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if(e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
+});
+
+function exportToExcel() {
+  const data = allRequests.map(i => ({
+    'ID':i.ID,'Company':i['Company']||'','Branch':getBranch(i),
+    'Category':getCategory(i),'Details':i['OData__x0627__x062e__x0628__x0631__x06']||'',
+    'Priority':i['Priority']||'Normal','Status':getStatus(i),
+    'Cost':i['Cost']||'','Created':formatDate(i.Created)
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Maintenance');
+  XLSX.writeFile(wb, `Swag_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📥 Exported!', 'success');
+}
+
+function exportFinanceExcel() {
+  const data = allFinance.map(f=>({'Finance ID':f.ID,'Request ID':f.OriginalRequestID||'','Branch':f.Branch||'','Category':f.cateogry||'','Cost':f.Cost||'','Status':f['Billing_x0020_status']?.Value||'','Approved By':f.Approved_By||''}));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Finance');
+  XLSX.writeFile(wb, `Finance_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📥 Finance exported!', 'success');
+}
+
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toast-wrap');
+  if(!wrap) return;
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icon = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  wrap.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity='0';
+    t.style.transition='all 0.3s';
+    setTimeout(()=>t.remove(),300);
+  }, 3000);
+}
+
+window.onload = async () => {
+  await initMsal();
+  if(!msalInstance) return;
+  await msalInstance.initialize();
+  const response = await msalInstance.handleRedirectPromise();
+  if(response?.account) {
+    setUser(response.account, response.accessToken);
+    showDashboard();
+    await getToken();
+    loadAll();
+    return;
+  }
+  const accounts = msalInstance.getAllAccounts();
+  if(accounts.length > 0) {
+    try { await getToken(); showDashboard(); loadAll(); } catch(e) {}
+  }
+  setInterval(() => {
+    const t = document.getElementById('live-time');
+    if(t && !t.textContent.includes('Sync')) t.textContent = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  }, 60000);
+};
+
+setInterval(loadAll, 120000);
+</script>
 </body>
 </html>
