@@ -1060,13 +1060,9 @@ const SCOPES = ['https://netorg20570594.sharepoint.com/AllSites.Read', 'User.Rea
 
 async function signIn() {
   try {
-    const result = await msalInstance.loginPopup({ scopes: SCOPES });
-    setUser(result.account, result.accessToken);
-    showDashboard();
-    await getToken();
-    loadAll();
+    await msalInstance.loginRedirect({ scopes: SCOPES });
   } catch(e) {
-    toast('Login failed: ' + e.message, 'error');
+    alert('Login failed: ' + e.message);
   }
 }
 
@@ -1085,8 +1081,7 @@ async function getToken() {
     accessToken = result.accessToken;
     if (!currentUser) setUser(accounts[0], accessToken);
   } catch(e) {
-    const result = await msalInstance.acquireTokenPopup({ scopes: SCOPES });
-    accessToken = result.accessToken;
+    await msalInstance.acquireTokenRedirect({ scopes: SCOPES });
   }
 }
 
