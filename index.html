@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Swag Maintenance Dashboard</title>
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --bg: #0F0F0F;
@@ -279,7 +279,17 @@ const LIST_F = '20fdeb86-c734-467d-8d61-06bb5a4bf956';
 
 let msalInstance = null;
 
-function initMsal() {
+async function initMsal() {
+  // Wait for MSAL to be available
+  let attempts = 0;
+  while (typeof msal === 'undefined' && attempts < 50) {
+    await new Promise(r => setTimeout(r, 100));
+    attempts++;
+  }
+  if (typeof msal === 'undefined') {
+    console.error('MSAL failed to load');
+    return;
+  }
   const msalConfig = {
     auth: {
       clientId: CLIENT_ID,
@@ -523,7 +533,8 @@ function filterAll() {
 
 // Check if already logged in
 window.onload = async () => {
-  initMsal();
+  await initMsal();
+  if (!msalInstance) { console.error('MSAL init failed'); return; }
   await msalInstance.initialize();
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
