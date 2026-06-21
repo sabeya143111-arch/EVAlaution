@@ -432,6 +432,16 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
 [data-theme="dark"] .co-name { color:#FFFFFF; font-weight:700; }
 [data-theme="dark"] .table-title, [data-theme="dark"] .topbar-title { color:#FFFFFF; }
 [data-theme="dark"] .fin-amount { font-weight:700; }
+
+/* features: KPI strip + sortable headers */
+.kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+.kpi-box { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+.kpi-val { font-family:'Space Mono',monospace; font-size:26px; font-weight:700; color:var(--accent); line-height:1; }
+.kpi-lbl { font-size:11px; color:var(--muted); margin-top:8px; letter-spacing:.3px; }
+[data-theme="dark"] .kpi-lbl { color:#B7C3D4; font-weight:600; }
+.th-sort { cursor:pointer; user-select:none; }
+.th-sort:hover { color:var(--accent); }
+@media (max-width:768px){ .kpi-strip{ grid-template-columns:repeat(2,1fr); } #global-search{ display:none; } }
 </style>
 </head>
 <body>
@@ -483,6 +493,7 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
         <div class="user-avatar" id="user-initial">T</div>
         <span id="user-name">Loading...</span>
       </div>
+      <input id="global-search" class="flt-input" placeholder="Search everything…" oninput="globalSearch(this.value)" style="min-width:160px;height:34px"/>
       <button class="hdr-btn hdr-icon-btn" onclick="toggleLang()" id="lang-btn" title="Language">العربية</button>
       <button class="hdr-btn hdr-icon-btn" onclick="toggleTheme()" id="theme-btn" title="Theme"><span id="theme-ico"></span></button>
       <button class="hdr-btn" onclick="loadAll()"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg> <span data-t="refresh">Refresh</span></button>
@@ -544,6 +555,13 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
           <div class="stat-num" id="stat-canceled">—</div>
           <div class="stat-label" data-t="canceled">Canceled</div>
         </div>
+      </div>
+
+      <div class="kpi-strip" id="kpi-strip">
+        <div class="kpi-box"><div class="kpi-val" id="kpi-avgres">—</div><div class="kpi-lbl" data-t="kpiAvgRes">Avg Resolution</div></div>
+        <div class="kpi-box"><div class="kpi-val" id="kpi-oldest">—</div><div class="kpi-lbl" data-t="kpiOldest">Oldest Open</div></div>
+        <div class="kpi-box"><div class="kpi-val" id="kpi-completion">—</div><div class="kpi-lbl" data-t="kpiCompletion">Completion Rate</div></div>
+        <div class="kpi-box"><div class="kpi-val" id="kpi-overdue" style="color:var(--red)">—</div><div class="kpi-lbl" data-t="kpiOverdue">Overdue</div></div>
       </div>
 
       <div class="company-grid" id="company-grid">
@@ -635,10 +653,16 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
         </div>
       </div>
       <div class="table-card">
-        <div class="table-header"><div class="table-title" data-t="financeRecords">Finance Records</div></div>
+        <div class="table-header"><div class="table-title" data-t="financeRecords">Finance Records</div>
+          <div id="fin-bulk-bar" style="display:none;align-items:center;gap:10px">
+            <span id="fin-sel-count" class="table-count">0</span>
+            <button class="act-btn approve" onclick="bulkFinance('approve')"><span data-t="approveSel">Approve Selected</span></button>
+            <button class="act-btn reject" onclick="bulkFinance('reject')"><span data-t="rejectSel">Reject Selected</span></button>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th data-t="cFinID">Fin ID</th><th data-t="cReqID">Req ID</th><th data-t="cBranch">Branch</th><th data-t="cCategory">Category</th><th data-t="cCost">Cost</th><th data-t="cStatus">Status</th><th data-t="cApprovedBy">Approved By</th><th></th></tr></thead>
+            <thead><tr><th style="width:34px"><input type="checkbox" id="fin-check-all" onclick="toggleFinAll(this.checked)"></th><th data-t="cFinID">Fin ID</th><th data-t="cReqID">Req ID</th><th data-t="cBranch">Branch</th><th data-t="cCategory">Category</th><th data-t="cCost">Cost</th><th data-t="cStatus">Status</th><th data-t="cApprovedBy">Approved By</th><th></th></tr></thead>
             <tbody id="finance-tbody"><tr><td colspan="8"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
           </table>
         </div>
@@ -664,6 +688,10 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
         <div class="chart-card">
           <div class="chart-header" data-t="prioritySplit">Priority Split</div>
           <div class="chart-wrap"><canvas id="chart-priority"></canvas></div>
+        </div>
+        <div class="chart-card" style="grid-column:1/-1">
+          <div class="chart-header" data-t="workload">Technician Workload</div>
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-workload"></canvas></div>
         </div>
       </div>
     </div>
@@ -710,12 +738,20 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
           <div class="flt-label" data-t="to">To</div>
           <input type="date" class="flt-input" id="filter-to" onchange="filterAll()"/>
         </div>
+        <div class="flt-group">
+          <div class="flt-label" data-t="quickDates">Quick:</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost" style="padding:8px 10px" onclick="quickDate('today')"><span data-t="qToday">Today</span></button>
+            <button class="btn btn-ghost" style="padding:8px 10px" onclick="quickDate('week')"><span data-t="qWeek">This Week</span></button>
+            <button class="btn btn-ghost" style="padding:8px 10px" onclick="quickDate('month')"><span data-t="qMonth">This Month</span></button>
+          </div>
+        </div>
       </div>
       <div id="all-info" style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:'Space Mono',monospace"></div>
       <div class="table-card">
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th data-t="cID">ID</th><th data-t="cCompany">Company</th><th data-t="cBranch">Branch</th><th data-t="cCategory">Category</th><th data-t="cDetail">Detail</th><th data-t="cPriority">Priority</th><th data-t="cStatus">Status</th><th data-t="cAssigned">Assigned</th><th data-t="cCreated">Created</th><th></th></tr></thead>
+            <thead><tr><th class="th-sort" onclick="sortBy('id')" data-t="cID">ID</th><th class="th-sort" onclick="sortBy('company')" data-t="cCompany">Company</th><th class="th-sort" onclick="sortBy('branch')" data-t="cBranch">Branch</th><th class="th-sort" onclick="sortBy('category')" data-t="cCategory">Category</th><th data-t="cDetail">Detail</th><th class="th-sort" onclick="sortBy('priority')" data-t="cPriority">Priority</th><th class="th-sort" onclick="sortBy('status')" data-t="cStatus">Status</th><th data-t="cAssigned">Assigned</th><th class="th-sort" onclick="sortBy('created')" data-t="cCreated">Created</th><th></th></tr></thead>
             <tbody id="all-tbody"><tr><td colspan="10"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
           </table>
         </div>
@@ -807,6 +843,7 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
     <div class="modal-body" id="modal-detail-body"></div>
     <div class="modal-footer">
       <a id="detail-sp-link" href="#" target="_blank" class="btn btn-ghost"><span data-t="openSharePoint">Open in SharePoint ↗</span></a>
+      <button class="btn btn-ghost" onclick="printRequest(window._detailId)"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> <span data-t="print">Print / PDF</span></button>
       <button class="btn btn-primary" onclick="closeModal('modal-detail')"><span data-t="close">Close</span></button>
     </div>
   </div>
@@ -848,7 +885,12 @@ const I18N = {
     detailsReq:'Details *', submitRequest:'Submit Request', requestDetails:'Request Details',
     openSharePoint:'Open in SharePoint ↗', close:'Close',
     searchPlaceholder:'Search...', notePlaceholder:'Add a note...', detailPlaceholder:'Describe the issue...',
-    selectBranch:'Select branch'
+    selectBranch:'Select branch',
+    kpiAvgRes:'Avg Resolution', kpiOldest:'Oldest Open', kpiCompletion:'Completion Rate', kpiOverdue:'Overdue',
+    overdue:'Overdue', qToday:'Today', qWeek:'This Week', qMonth:'This Month', quickDates:'Quick:',
+    print:'Print / PDF', selectAllLbl:'Select all', approveSel:'Approve Selected', rejectSel:'Reject Selected',
+    gsearch:'Search everything…', workload:'Technician Workload', daysAgo:'d', noTech:'Unassigned',
+    selectedN:'selected', newReqAlert:'new request(s) arrived'
   },
   ar: {
     brand:'مجموعة سواج', loginTitle:'مركز التحكم<br>بالصيانة',
@@ -880,7 +922,12 @@ const I18N = {
     detailsReq:'التفاصيل *', submitRequest:'إرسال الطلب', requestDetails:'تفاصيل الطلب',
     openSharePoint:'فتح في SharePoint ↗', close:'إغلاق',
     searchPlaceholder:'بحث...', notePlaceholder:'أضف ملاحظة...', detailPlaceholder:'صف المشكلة...',
-    selectBranch:'اختر الفرع'
+    selectBranch:'اختر الفرع',
+    kpiAvgRes:'متوسط زمن الإنجاز', kpiOldest:'أقدم طلب مفتوح', kpiCompletion:'نسبة الإنجاز', kpiOverdue:'متأخرة',
+    overdue:'متأخر', qToday:'اليوم', qWeek:'هذا الأسبوع', qMonth:'هذا الشهر', quickDates:'سريع:',
+    print:'طباعة / PDF', selectAllLbl:'تحديد الكل', approveSel:'اعتماد المحدد', rejectSel:'رفض المحدد',
+    gsearch:'ابحث في كل شيء…', workload:'حِمل الفنيين', daysAgo:'ي', noTech:'غير مُسند',
+    selectedN:'محدد', newReqAlert:'طلب جديد وصل'
   }
 };
 
@@ -907,6 +954,7 @@ function applyLang(lang) {
 
   // placeholders
   const sp = document.getElementById('all-search'); if (sp) sp.placeholder = t('searchPlaceholder');
+  const gs = document.getElementById('global-search'); if (gs) gs.placeholder = t('gsearch');
   const np = document.getElementById('modal-status-note'); if (np) np.placeholder = t('notePlaceholder');
   const dp = document.getElementById('new-detail'); if (dp) dp.placeholder = t('detailPlaceholder');
 
@@ -978,6 +1026,9 @@ let msalInstance = null;
 let currentUser = null;
 let accessToken = null;
 let allRequests = [];
+let lastMaxId = null;
+let sortState = { key:null, dir:1 };
+let finSel = new Set();
 let allFinance = [];
 let currentTab = 'overview';
 let currentPage = 1;
@@ -1065,6 +1116,13 @@ async function loadAll() {
     ]);
     allRequests = maint;
     allFinance = fin;
+    // new-request alert
+    const maxId = maint.reduce((m,i)=>Math.max(m, i.ID||0), 0);
+    if (lastMaxId !== null && maxId > lastMaxId) {
+      const n = maint.filter(i => (i.ID||0) > lastMaxId).length;
+      toast(`<svg class="ico" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> ${n} ${t('newReqAlert')}`, 'info');
+    }
+    lastMaxId = maxId;
     const now = new Date();
     const locale = currentLang==='ar'?'ar-SA':'en-GB';
     document.getElementById('live-time').textContent = now.toLocaleTimeString(locale, {hour:'2-digit',minute:'2-digit'});
@@ -1110,6 +1168,16 @@ function viewBtn(id) {
   return `<button class="view-btn" onclick="openDetail(${id})"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> ${t('cActions')==='إجراءات'?'عرض':'View'}</button>`;
 }
 
+// ============ SLA ============
+const SLA_DAYS = 7;
+function isOpen(i){ const s=getStatus(i).toLowerCase(); return !(s.includes('complete')||s.includes('ملغي')||s.includes('cancel')); }
+function daysOld(i){ if(!i.Created) return 0; return Math.floor((Date.now()-new Date(i.Created))/86400000); }
+function isOverdue(i){ return isOpen(i) && daysOld(i) > SLA_DAYS; }
+function overdueTag(i){
+  if(!isOverdue(i)) return '';
+  return `<span class="badge b-canceled" style="margin-inline-start:6px" title="${daysOld(i)} ${t('daysAgo')}"><span class="b-dot"></span>${t('overdue')} ${daysOld(i)}${t('daysAgo')}</span>`;
+}
+
 // ============ TABS ============
 function switchTab(tab) {
   currentTab = tab;
@@ -1137,6 +1205,20 @@ function renderOverview() {
   animateNum('stat-done', s.filter(x => x.includes('complete')).length);
   animateNum('stat-finance', s.filter(x => x==='transcation').length);
   animateNum('stat-canceled', s.filter(x => x.includes('ملغي')||x.includes('cancel')).length);
+
+  // KPIs
+  const completed = items.filter(i => getStatus(i).toLowerCase().includes('complete'));
+  const resDays = completed.map(i => i.Modified && i.Created ? Math.max(0,(new Date(i.Modified)-new Date(i.Created))/86400000) : null).filter(x=>x!=null);
+  const avgRes = resDays.length ? (resDays.reduce((a,b)=>a+b,0)/resDays.length) : null;
+  const openItems = items.filter(isOpen);
+  const oldest = openItems.length ? Math.max(...openItems.map(daysOld)) : 0;
+  const compRate = items.length ? Math.round(completed.length/items.length*100) : 0;
+  const overdueCount = items.filter(isOverdue).length;
+  const setK=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+  setK('kpi-avgres', avgRes==null ? '—' : avgRes.toFixed(1)+t('daysAgo'));
+  setK('kpi-oldest', oldest+t('daysAgo'));
+  setK('kpi-completion', compRate+'%');
+  setK('kpi-overdue', overdueCount);
 
   const star = '<svg class="ico" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>';
   const companies = {
@@ -1171,7 +1253,7 @@ function renderOverview() {
       <td>${getCategory(i)}</td>
       <td>${getBranch(i)}</td>
       <td>${i['Priority']||'Normal'}</td>
-      <td>${statusBadge(getStatus(i))}</td>
+      <td>${statusBadge(getStatus(i))}${overdueTag(i)}</td>
       <td style="color:var(--muted);font-size:12px">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
     </tr>`).join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5 5h14l3 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></svg></div>${t('loading')==='جارٍ التحميل...'?'لا توجد بيانات':'No data'}</div></td></tr>`;
@@ -1208,7 +1290,7 @@ function renderMyRequests() {
       <td>${getCategory(i)}</td>
       <td>${getBranch(i)}</td>
       <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2)">${getDetail(i)}</td>
-      <td>${statusBadge(getStatus(i))}</td>
+      <td>${statusBadge(getStatus(i))}${overdueTag(i)}</td>
       <td>${financeBadge(fin?.['Billing_x0020_status']?.Value)}</td>
       <td style="color:var(--muted);font-size:12px">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
@@ -1233,7 +1315,7 @@ function renderAssigned() {
       <td>${getBranch(i)}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2)">${getDetail(i)}</td>
       <td>${i['Priority']||'Normal'}</td>
-      <td>${statusBadge(getStatus(i))}</td>
+      <td>${statusBadge(getStatus(i))}${overdueTag(i)}</td>
       <td style="font-size:12px;color:var(--muted2)">${i.Author?.DisplayName||'—'}</td>
       <td>
         <div class="action-btns">
@@ -1262,8 +1344,11 @@ function renderFinance() {
   document.getElementById('fin-app-amt').textContent = appAmt.toLocaleString()+cur;
   document.getElementById('fin-pend-amt').textContent = pendAmt.toLocaleString()+cur;
   document.getElementById('fin-rej-amt').textContent = rejAmt.toLocaleString()+cur;
-  document.getElementById('finance-tbody').innerHTML = fin.map(f => `
+  document.getElementById('finance-tbody').innerHTML = fin.map(f => {
+    const done = ['approved','rejected'].includes((f['Billing_x0020_status']?.Value||f['Billing_x0020_status']||'').toLowerCase());
+    return `
     <tr>
+      <td>${done ? '' : `<input type="checkbox" class="fin-cb" data-id="${f.ID}" ${finSel.has(f.ID)?'checked':''} onclick="toggleFinSel(${f.ID},this.checked)">`}</td>
       <td><span class="id-tag">#${f.ID}</span></td>
       <td><span class="id-tag">#${f.OriginalRequestID||'—'}</span></td>
       <td>${f.Branch||'—'}</td>
@@ -1273,11 +1358,13 @@ function renderFinance() {
       <td style="font-size:11px;color:var(--muted2)">${f.Approved_By||'—'}</td>
       <td>
         <div class="action-btns">
-          ${['approved','rejected'].includes((f['Billing_x0020_status']?.Value||f['Billing_x0020_status']||'').toLowerCase()) ? '' : `<button class="act-btn approve" onclick="financeAction(${f.ID},'approve')">✓ ${t('approved')}</button><button class="act-btn reject" onclick="financeAction(${f.ID},'reject')">✕ ${t('rejected')}</button>`}
+          ${done ? '' : `<button class="act-btn approve" onclick="financeAction(${f.ID},'approve')">✓ ${t('approved')}</button><button class="act-btn reject" onclick="financeAction(${f.ID},'reject')">✕ ${t('rejected')}</button>`}
           <a href="${SP_F}/Lists/Finance%20purchase%20approvals/DispForm.aspx?ID=${f.ID}" target="_blank" class="view-btn">${currentLang==='ar'?'فتح ↗':'Open ↗'}</a>
         </div>
       </td>
-    </tr>`).join('') || `<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg></div>${currentLang==='ar'?'لا توجد سجلات مالية':'No finance records'}</div></td></tr>`;
+    </tr>`;
+  }).join('') || `<tr><td colspan="9"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg></div>${currentLang==='ar'?'لا توجد سجلات مالية':'No finance records'}</div></td></tr>`;
+  updateFinBulkBar();
 }
 
 // ============ CHARTS ============
@@ -1334,6 +1421,21 @@ function renderCharts() {
     data:{labels:prLabels,datasets:[{data:Object.values(prMap),backgroundColor:['#FF3366','#FFB020','#00D9FF','#00FF88'],borderWidth:0,hoverOffset:6}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:textColor,font:{size:11,family:'Space Mono'}}}}}
   });
+
+  // technician workload (open tasks per assignee)
+  const wl = {};
+  items.filter(isOpen).forEach(i => {
+    const as = (i['OData__x0627__x0644__x0645__x0648__x06']||[]).map(a=>a.DisplayName);
+    if(!as.length) wl[t('noTech')] = (wl[t('noTech')]||0)+1;
+    else as.forEach(n => wl[n] = (wl[n]||0)+1);
+  });
+  const wlSorted = Object.entries(wl).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const ctx5 = document.getElementById('chart-workload');
+  if(ctx5 && wlSorted.length) chartInstances.w = new Chart(ctx5, {
+    type:'bar',
+    data:{labels:wlSorted.map(x=>x[0]),datasets:[{label:t('open'),data:wlSorted.map(x=>x[1]),backgroundColor:'#8B5CF6',borderRadius:6,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor},grid:{display:false}}}}
+  });
 }
 
 // ============ ALL + FILTERS ============
@@ -1352,6 +1454,19 @@ function filterAll() {
     const matchTo = !to || (created && created <= new Date(to+'T23:59:59'));
     return matchQ && matchCo && matchSt && matchFrom && matchTo;
   });
+  // sorting
+  if (sortState.key) {
+    const k = sortState.key, dir = sortState.dir;
+    const val = (i) => k==='id' ? (i.ID||0)
+      : k==='company' ? (i['Company']||'')
+      : k==='branch' ? getBranch(i)
+      : k==='category' ? getCategory(i)
+      : k==='priority' ? ({urgent:0,high:1,normal:2,low:3}[(i['Priority']||'normal').toLowerCase()] ?? 9)
+      : k==='status' ? getStatus(i)
+      : k==='created' ? (i.Created ? new Date(i.Created).getTime() : 0)
+      : '';
+    filtered.sort((a,b)=>{ const x=val(a),y=val(b); return (x<y?-1:x>y?1:0)*dir; });
+  }
   const info = document.getElementById('all-info');
   if(info) info.textContent = currentLang==='ar' ? `${filtered.length} نتيجة` : `${filtered.length} result${filtered.length!==1?'s':''} found`;
   const total = Math.ceil(filtered.length/PAGE_SIZE);
@@ -1369,7 +1484,7 @@ function renderAllTable(items) {
       <td>${getCategory(i)}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted2)">${getDetail(i)}</td>
       <td style="color:var(--muted2);font-size:12px">${i['Priority']||'Normal'}</td>
-      <td>${statusBadge(getStatus(i))}</td>
+      <td>${statusBadge(getStatus(i))}${overdueTag(i)}</td>
       <td style="font-size:12px;color:var(--muted2)">${assignees||'—'}</td>
       <td style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
@@ -1387,6 +1502,22 @@ function renderPagination(total, filtered) {
   pg.innerHTML = html;
 }
 function goPage(p) { currentPage=p; filterAll(); }
+function sortBy(key){ if(sortState.key===key) sortState.dir*=-1; else { sortState.key=key; sortState.dir=1; } currentPage=1; filterAll(); }
+function quickDate(range){
+  const to = new Date(); let from = new Date();
+  if(range==='today'){ from = new Date(); }
+  else if(range==='week'){ from.setDate(to.getDate()-7); }
+  else if(range==='month'){ from.setMonth(to.getMonth()-1); }
+  const fmt = d => d.toISOString().slice(0,10);
+  const ff=document.getElementById('filter-from'), ft=document.getElementById('filter-to');
+  if(ff) ff.value=fmt(from); if(ft) ft.value=fmt(to);
+  currentPage=1; filterAll();
+}
+function globalSearch(v){
+  if(currentTab!=='all') switchTab('all');
+  const s=document.getElementById('all-search'); if(s) s.value=v;
+  currentPage=1; filterAll();
+}
 function clearFilters() {
   ['all-search','filter-company','filter-status','filter-from','filter-to'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   currentPage=1; filterAll();
@@ -1484,6 +1615,7 @@ async function submitNewRequest() {
 
 // ============ DETAIL MODAL ============
 function openDetail(id) {
+  window._detailId = id;
   const i = allRequests.find(x => x.ID === id);
   if (!i) return;
   const finMap = {};
@@ -1549,6 +1681,69 @@ async function financeAction(finId, action) {
 }
 
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+// ============ BULK FINANCE ============
+function toggleFinSel(id, checked){ if(checked) finSel.add(id); else finSel.delete(id); updateFinBulkBar(); }
+function toggleFinAll(checked){
+  document.querySelectorAll('.fin-cb').forEach(cb => { const id=+cb.dataset.id; cb.checked=checked; if(checked) finSel.add(id); else finSel.delete(id); });
+  updateFinBulkBar();
+}
+function updateFinBulkBar(){
+  const bar=document.getElementById('fin-bulk-bar'); if(!bar) return;
+  // keep only still-pending ids
+  const pendingIds = new Set(allFinance.filter(f=>!['approved','rejected'].includes((f['Billing_x0020_status']?.Value||'').toLowerCase())).map(f=>f.ID));
+  finSel = new Set([...finSel].filter(id=>pendingIds.has(id)));
+  bar.style.display = finSel.size>0 ? 'flex' : 'none';
+  const c=document.getElementById('fin-sel-count'); if(c) c.textContent = `${finSel.size} ${t('selectedN')}`;
+}
+async function bulkFinance(action){
+  if(!finSel.size) return;
+  const ids=[...finSel];
+  if(!confirm(`${currentLang==='ar'?'تأكيد':'Confirm'} ${action.toUpperCase()} ${ids.length} ${t('selectedN')}?`)) return;
+  const newStatus = action==='approve' ? 'approved' : 'rejected';
+  try{
+    await getToken();
+    const digestR = await fetch(`${SP_F}/_api/contextinfo`,{method:'POST',headers:{'Accept':'application/json;odata=verbose','Authorization':`Bearer ${accessToken}`}});
+    const digest=(await digestR.json()).d.GetContextWebInformation.FormDigestValue;
+    const now=new Date().toLocaleDateString('en-GB');
+    let ok=0;
+    for(const finId of ids){
+      const fin=allFinance.find(f=>f.ID===finId); if(!fin) continue;
+      const body={"__metadata":{"type":fin.__metadata?.type||"SP.Data.Finance_x0020_purchase_x0020_approvalsListItem"},"Billing_x0020_status":newStatus,"Approved_By":`${currentUser?.name||'Dashboard'} - ${now}`};
+      const r=await fetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items(${finId})`,{method:'POST',headers:{'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose','Authorization':`Bearer ${accessToken}`,'X-RequestDigest':digest,'IF-MATCH':'*','X-HTTP-Method':'MERGE'},body:JSON.stringify(body)});
+      if(r.ok||r.status===204) ok++;
+    }
+    toast(`<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> ${ok}/${ids.length} ${newStatus}`, ok?'success':'error');
+    finSel.clear();
+    await loadAll();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+// ============ PRINT / PDF ============
+function printRequest(id){
+  const i=allRequests.find(x=>x.ID===id); if(!i) return;
+  const finMap={}; allFinance.forEach(f=>{ if(f.OriginalRequestID) finMap[f.OriginalRequestID]=f; });
+  const fin=finMap[id];
+  const assignees=(i['OData__x0627__x0644__x0645__x0648__x06']||[]).map(a=>a.DisplayName).join(', ')||'—';
+  const rtl=currentLang==='ar';
+  const rows=[[t('cReqID'),'#'+i.ID],[t('cCompany'),i['Company']||'—'],[t('cBranch'),getBranch(i)],[t('cCategory'),getCategory(i)],[t('priority'),i['Priority']||'Normal'],[t('cStatus'),getStatus(i)||t('pending')],[t('cAssigned'),assignees],[t('cCreated'),formatDate(i.Created)]];
+  if(fin){ rows.push([t('cCost'),(fin.Cost||'—')+(rtl?' ر.س':' SAR')]); rows.push([t('cApprovedBy'),fin.Approved_By||'—']); }
+  const w=window.open('','_blank');
+  w.document.write(`<html dir="${rtl?'rtl':'ltr'}"><head><title>Request #${i.ID}</title><style>
+    body{font-family:Arial,Tahoma,sans-serif;padding:40px;color:#16202E}
+    h1{font-size:20px;margin:0 0 4px} .sub{color:#888;font-size:12px;margin-bottom:24px}
+    table{width:100%;border-collapse:collapse} td{padding:10px 12px;border-bottom:1px solid #e3e3e3;font-size:14px}
+    td.k{color:#888;width:38%} .detail{margin-top:20px;padding:16px;background:#f6f6f6;border-radius:8px;white-space:pre-wrap;font-size:14px}
+    .ft{margin-top:30px;color:#aaa;font-size:11px}
+  </style></head><body>
+    <h1>SWAG — ${t('requestDetails')}</h1>
+    <div class="sub">#${i.ID} · ${formatDate(i.Created)}</div>
+    <table>${rows.map(([k,v])=>`<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>
+    <div class="detail"><b>${t('cDetail')}:</b><br>${esc(i['OData__x0627__x062e__x0628__x0631__x06']||'—')}</div>
+    <div class="ft">Generated ${new Date().toLocaleString(rtl?'ar-SA':'en-GB')}</div>
+  </body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
 document.addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) closeModal(e.target.id); });
 
 function exportToExcel() {
