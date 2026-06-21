@@ -414,12 +414,24 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
 [data-theme="light"] .header-logo img { filter: invert(1); }
 
 /* dark-theme table emphasis */
-[data-theme="dark"] td { color:#FFFFFF !important; font-weight:600; font-size:14px; }
+[data-theme="dark"] td { color:#FFFFFF !important; font-weight:700; font-size:14px; }
 [data-theme="dark"] td [style*="--muted"] { color:#E6ECF5 !important; }
 [data-theme="dark"] th { color:#AEBED2; font-size:11px; }
 [data-theme="dark"] .id-tag { color:#FFFFFF; }
 [data-theme="dark"] .co-label, [data-theme="dark"] .modal-info-label { color:#C5D0DF; }
 [data-theme="dark"] .stat-label { color:#B7C3D4; font-weight:600; }
+
+/* dark-theme: view modal, company cards, detail text -> white + bold */
+[data-theme="dark"] .modal-info-val { color:#FFFFFF !important; font-weight:700; font-size:13px; }
+[data-theme="dark"] .modal-info-label { color:#D5DEEC !important; }
+[data-theme="dark"] #modal-detail-body, [data-theme="dark"] #modal-detail-body * { color:#F4F8FF; }
+[data-theme="dark"] #modal-detail-body .modal-info-val { color:#FFFFFF !important; font-weight:700; }
+[data-theme="dark"] #modal-status-info .modal-info-val { color:#FFFFFF !important; font-weight:700; }
+[data-theme="dark"] .co-val { color:#FFFFFF !important; font-weight:700; }
+[data-theme="dark"] .co-label { color:#CBD5E3 !important; }
+[data-theme="dark"] .co-name { color:#FFFFFF; font-weight:700; }
+[data-theme="dark"] .table-title, [data-theme="dark"] .topbar-title { color:#FFFFFF; }
+[data-theme="dark"] .fin-amount { font-weight:700; }
 </style>
 </head>
 <body>
