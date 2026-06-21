@@ -149,6 +149,13 @@ body::after {
 
 .login-title-wrap { position: relative; display: inline-block; padding: 14px 34px; margin-bottom: 8px; }
 .hw-svg { position: absolute; top: -16px; left: -10px; right: -10px; bottom: -16px; width: auto; height: auto; overflow: visible; pointer-events: none; z-index: 0; }
+.hw-svg path { stroke-dasharray: var(--hw-len, 2400); animation: hwDraw 5.5s ease-in-out infinite; }
+@keyframes hwDraw {
+  0%   { stroke-dashoffset: var(--hw-len, 2400); }
+  45%  { stroke-dashoffset: 0; }
+  62%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: calc(var(--hw-len, 2400) * -1); }
+}
 .login-title {
   position: relative; z-index: 1;
   font-size: 28px; font-weight: 700; line-height: 1.2;
@@ -198,6 +205,7 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .login-grid-lines { animation: none; }
   .login-title { animation: none; opacity: 1; }
+  .hw-svg path { animation: none; stroke-dashoffset: 0; }
 }
 /* =================== END LOGIN (UPDATED) =================== */
 
@@ -1934,15 +1942,9 @@ function initMagnetLogo() {
 function initHandwriting() {
   const path = document.getElementById('hw-path');
   if (!path) return;
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const len = path.getTotalLength();
+  path.style.setProperty('--hw-len', len);
   path.style.strokeDasharray = len;
-  if (reduce) { path.style.strokeDashoffset = 0; return; }
-  path.style.strokeDashoffset = len;
-  requestAnimationFrame(() => {
-    path.style.transition = 'stroke-dashoffset 2.5s cubic-bezier(0.43,0.13,0.23,0.96)';
-    path.style.strokeDashoffset = '0';
-  });
 }
 
 window.onload = async () => {
