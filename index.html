@@ -1127,7 +1127,8 @@ async function loadAll() {
       } catch(eu) { /* non-critical */ }
     }
     // Step 2: Fetch maintenance items — plain $expand (no $select=* which breaks on many tenants)
-    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,${ASSIGNEE_FIELD}`;
+    // Try multiple expand strategies for assignee
+    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,OData__x0627__x0644__x0645__x0648__x06,FieldValuesAsText`;
     let maint;
     try {
       maint = await spFetch(baseM);
@@ -1139,6 +1140,16 @@ async function loadAll() {
     allRequests = maint;
     allFinance = fin;
     // new-request alert
+    // Debug: log SP user info to console
+    if(currentSPUser) {
+      console.log('SP User loaded:', currentSPUser);
+      console.log('MSAL User:', currentUser?.email);
+      // Check first item assignees
+      if(maint.length > 0) {
+        const firstAssigned = maint.find(i => assigneeList(i).length > 0);
+        if(firstAssigned) console.log('Sample assignee data:', assigneeList(firstAssigned));
+      }
+    }
     const maxId = maint.reduce((m,i)=>Math.max(m, i.ID||0), 0);
     if (lastMaxId !== null && maxId > lastMaxId) {
       const n = maint.filter(i => (i.ID||0) > lastMaxId).length;
@@ -1193,8 +1204,9 @@ function asArr(v){
   if(!v) return [];
   if(Array.isArray(v)) return v;
   if(v && typeof v === 'object' && v.results) return v.results;
-  // Sometimes SP returns a single object instead of array
-  if(v && typeof v === 'object' && (v.Title||v.EMail||v.Email||v.DisplayName)) return [v];
+  if(v && typeof v === 'object' && (v.Title||v.EMail||v.Email||v.DisplayName||v.Id)) return [v];
+  // SP sometimes returns deferred object - skip it
+  if(v && typeof v === 'object' && v.__deferred) return [];
   return [];
 }
 function personEmail(a){
@@ -1213,7 +1225,7 @@ function assigneeList(i){
 function assigneeNames(i){ return assigneeList(i).map(a=>a.Title||a.DisplayName||a.Name||a.LookupValue).filter(Boolean); }
 function isAssignedToMe(i){
   if(!currentUser) return false;
-  const spEmail = currentSPUser?.email || '';
+  const spEmail = (currentSPUser?.email || '').toLowerCase().trim();
   const spId    = currentSPUser?.id    || null;
   const meEmail = (currentUser.email||'').toLowerCase().trim();
   const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
@@ -1222,10 +1234,11 @@ function isAssignedToMe(i){
   return list.some(a => {
     const em = personEmail(a);
     const nm = personName(a);
-    if(spId    && a.Id && a.Id === spId) return true;      // SP user ID match (most reliable)
-    if(spEmail && em   && em === spEmail) return true;     // SP profile email
-    if(meEmail && em   && em === meEmail) return true;     // MSAL UPN
-    if(meName  && nm   && nm === meName) return true;      // display name fallback
+    if(spId    && a.Id && String(a.Id) === String(spId)) return true;
+    if(spEmail && em   && em === spEmail) return true;
+    if(meEmail && em   && em === meEmail) return true;
+    if(meEmail && em   && meEmail.split('@')[0] === em.split('@')[0]) return true;
+    if(meName  && nm   && nm === meName) return true;
     return false;
   });
 }
@@ -1237,17 +1250,23 @@ function authorName(i){
 function authorEmail(i){ return personEmail(i.Author||{}); }
 function isMine(i){
   if(!currentUser) return false;
-  const spEmail = currentSPUser?.email || '';
+  const spEmail = (currentSPUser?.email || '').toLowerCase().trim();
   const spId    = currentSPUser?.id    || null;
   const meEmail = (currentUser.email||'').toLowerCase().trim();
   const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
   const authorId = i.Author?.Id || null;
   const em = authorEmail(i);
   const nm = (authorName(i)||'').toLowerCase().trim();
-  if(spId    && authorId && authorId === spId) return true;  // SP user ID (most reliable)
-  if(spEmail && em       && em === spEmail) return true;     // SP profile email
-  if(meEmail && em       && em === meEmail) return true;     // MSAL UPN
-  if(meName  && nm       && nm === meName) return true;      // display name fallback
+  
+  // Debug: uncomment to troubleshoot
+  // console.log('isMine check:', {spEmail, spId, meEmail, meName, em, nm, authorId});
+  
+  if(spId    && authorId && String(authorId) === String(spId)) return true;
+  if(spEmail && em       && em === spEmail) return true;
+  if(meEmail && em       && em === meEmail) return true;
+  // Also try matching first part of email (before @)
+  if(meEmail && em && meEmail.split('@')[0] === em.split('@')[0]) return true;
+  if(meName  && nm       && nm === meName) return true;
   return false;
 }
 function viewBtn(id) {
