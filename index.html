@@ -808,15 +808,17 @@ html[dir="rtl"] .toast-wrap { right: auto; left: 24px; }
         <option>الكهرباء - صيانة الانارة</option>
         <option>الكهرباء - صيانة الشاشات</option>
         <option>الكهرباء - أعمال كهربائية</option>
+        <option>الكهرباء - اخرى</option>
         <option>التكييف - صيانة مكيفات</option>
         <option>التكييف - تنظيف مكيفات</option>
         <option>السباكة - تسريب مياه</option>
         <option>التشطيبات - المرايا</option>
         <option>التشطيبات - الابواب</option>
         <option>التشطيبات - الاستاندات</option>
+        <option>التشطيبات - أعمال نجارة</option>
         <option>الأجهزة - طابعة</option>
         <option>الأجهزة - كمبيوتر</option>
-        <option>الكهرباء - اخرى</option>
+        <option>الأجهزة - شاشة</option>
         <option>أخرى - متنوعة</option>
       </select>
       <div class="modal-label" data-t="priority">Priority</div>
@@ -1017,9 +1019,9 @@ const LIST_M = 'da8027dc-c155-4694-8d0d-8c862326de47';
 const LIST_F = '20fdeb86-c734-467d-8d61-06bb5a4bf956';
 
 const BRANCHES = {
-  'شركة سواج التجارية': ['سواج - جدة','سواج - الرياض','سواج - الدمام','سواج - مكة'],
-  'شركة لاروش التجارية': ['جدة - سوق 7','جدة - الكورنيش','جدة - ابحر','الرياض - النسيم','المدينة - اوتفيت'],
-  'شركة لروش جولد': ['Gold - جدة','Gold - الرياض','Gold - مكة']
+  'شركة سواج التجارية': ['سواج - جدة','سواج - الرياض','سواج - الدمام','سواج - سكاكا','سواج - مكة'],
+  'شركة لاروش التجارية': ['جدة - سوق 7','جدة - الكورنيش','جدة - ابحر','الرياض - النسيم','الدمام - اوتفيت','المدينة - اوتفيت','الرياض - الكورنيش'],
+  'شركة لروش جولد': ['Gold - جدة','Gold - الرياض','Gold - الدمام','Gold - سكاكا']
 };
 
 let msalInstance = null;
@@ -1041,7 +1043,7 @@ async function initMsal() {
   while (typeof msal === 'undefined' && tries < 50) { await new Promise(r => setTimeout(r, 100)); tries++; }
   if (typeof msal === 'undefined') return;
   msalInstance = new msal.PublicClientApplication({
-    auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: window.location.origin + window.location.pathname },
+    auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: 'https://ev-alaution.vercel.app/' },
     cache: { cacheLocation: 'sessionStorage' }
   });
 }
@@ -1049,7 +1051,7 @@ async function initMsal() {
 const SCOPES = ['https://netorg20570594.sharepoint.com/AllSites.Read', 'User.Read'];
 
 async function signIn() {
-  try { await msalInstance.loginRedirect({ scopes: SCOPES }); }
+  try { await msalInstance.loginRedirect({ scopes: SCOPES, redirectUri: 'https://ev-alaution.vercel.app/' }); }
   catch(e) { alert('Login failed: ' + e.message); }
 }
 
@@ -1110,13 +1112,19 @@ async function spFetch(url) {
 async function loadAll() {
   try {
     document.getElementById('live-time').textContent = currentLang==='ar'?'جارٍ المزامنة...':'Syncing...';
-    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`;
+    // Always expand Author (for My Requests) and the assignee field (for Assigned to Me)
+    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$select=*,Author/Id,Author/Title,Author/EMail,${ASSIGNEE_FIELD}/Id,${ASSIGNEE_FIELD}/Title,${ASSIGNEE_FIELD}/EMail&$expand=Author,${ASSIGNEE_FIELD}`;
     let maint;
     try {
-      maint = await spFetch(`${baseM}&$expand=Author,${ASSIGNEE_FIELD}`);
+      maint = await spFetch(baseM);
     } catch(e) {
-      try { maint = await spFetch(`${baseM}&$expand=${ASSIGNEE_FIELD}`); }
-      catch(e2){ maint = await spFetch(baseM); }
+      // Fallback: try without $select (some SP versions don't support mixed $select/$expand)
+      const baseM2 = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,${ASSIGNEE_FIELD}`;
+      try { maint = await spFetch(baseM2); }
+      catch(e2){
+        const baseM3 = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`;
+        maint = await spFetch(baseM3);
+      }
     }
     const fin = await spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`);
     allRequests = maint;
@@ -1172,25 +1180,61 @@ function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 
 // ============ PEOPLE FIELD HELPERS ============
 const ASSIGNEE_FIELD = 'OData__x0627__x0644__x0645__x0648__x06';
-function asArr(v){ if(!v) return []; if(Array.isArray(v)) return v; if(v.results) return v.results; return []; }
-function personEmail(a){ return (a?.EMail||a?.Email||a?.email||a?.Mail||a?.UserPrincipalName||'').toLowerCase().trim(); }
-function personName(a){ return (a?.Title||a?.DisplayName||a?.Name||a?.LookupValue||'').toLowerCase().trim(); }
-function assigneeList(i){ return asArr(i[ASSIGNEE_FIELD]); }
+function asArr(v){
+  if(!v) return [];
+  if(Array.isArray(v)) return v;
+  if(v && typeof v === 'object' && v.results) return v.results;
+  // Sometimes SP returns a single object instead of array
+  if(v && typeof v === 'object' && (v.Title||v.EMail||v.Email||v.DisplayName)) return [v];
+  return [];
+}
+function personEmail(a){
+  if(!a) return '';
+  // Handle every possible property name SP uses for email
+  return (a.EMail||a.Email||a.email||a.Mail||a.UserPrincipalName||a.LoginName||'').toLowerCase().trim().replace(/^i:0#\.f\|membership\|/,'');
+}
+function personName(a){
+  if(!a) return '';
+  return (a.Title||a.DisplayName||a.Name||a.LookupValue||'').toLowerCase().trim();
+}
+function assigneeList(i){
+  const raw = i[ASSIGNEE_FIELD];
+  return asArr(raw);
+}
 function assigneeNames(i){ return assigneeList(i).map(a=>a.Title||a.DisplayName||a.Name||a.LookupValue).filter(Boolean); }
 function isAssignedToMe(i){
   if(!currentUser) return false;
   const me = (currentUser.email||'').toLowerCase().trim();
   const meName = (currentUser.name||'').toLowerCase().trim();
-  return assigneeList(i).some(a => { const em=personEmail(a), nm=personName(a);
-    return (em && em===me) || (nm && meName && nm===meName); });
+  const list = assigneeList(i);
+  if(!list.length) return false;
+  return list.some(a => {
+    const em = personEmail(a);
+    const nm = personName(a);
+    // Match by email (preferred) or by display name as fallback
+    if(em && me && em === me) return true;
+    if(nm && meName && nm === meName) return true;
+    // Also check if current user email is contained in loginName style strings
+    if(em && me && em.includes(me)) return true;
+    return false;
+  });
 }
-function authorName(i){ const a=i.Author||{}; return a.Title||a.DisplayName||a.Name||'—'; }
-function authorEmail(i){ return personEmail(i.Author); }
+function authorName(i){
+  const a = i.Author;
+  if(!a) return '—';
+  return a.Title||a.DisplayName||a.Name||'—';
+}
+function authorEmail(i){ return personEmail(i.Author||{}); }
 function isMine(i){
   if(!currentUser) return false;
-  const me=(currentUser.email||'').toLowerCase().trim(), meName=(currentUser.name||'').toLowerCase().trim();
-  const em=authorEmail(i), nm=(authorName(i)||'').toLowerCase().trim();
-  return (em && em===me) || (nm && meName && nm===meName);
+  const me = (currentUser.email||'').toLowerCase().trim();
+  const meName = (currentUser.name||'').toLowerCase().trim();
+  const em = authorEmail(i);
+  const nm = (authorName(i)||'').toLowerCase().trim();
+  if(em && me && em === me) return true;
+  if(em && me && em.includes(me)) return true;
+  if(nm && meName && nm === meName) return true;
+  return false;
 }
 function viewBtn(id) {
   return `<button class="view-btn" onclick="openDetail(${id})"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> ${t('cActions')==='إجراءات'?'عرض':'View'}</button>`;
