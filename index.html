@@ -1043,7 +1043,7 @@ async function initMsal() {
   while (typeof msal === 'undefined' && tries < 50) { await new Promise(r => setTimeout(r, 100)); tries++; }
   if (typeof msal === 'undefined') return;
   msalInstance = new msal.PublicClientApplication({
-    auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: window.location.origin + window.location.pathname },
+    auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: 'https://ev-alaution.vercel.app/' },
     cache: { cacheLocation: 'sessionStorage' }
   });
 }
