@@ -1037,6 +1037,7 @@ let currentPage = 1;
 const PAGE_SIZE = 25;
 let activeItemId = null;
 let chartInstances = {};
+let currentSPUser = null; // SP profile: {email, name, id}
 
 async function initMsal() {
   let tries = 0;
@@ -1112,19 +1113,27 @@ async function spFetch(url) {
 async function loadAll() {
   try {
     document.getElementById('live-time').textContent = currentLang==='ar'?'جارٍ المزامنة...':'Syncing...';
-    // Always expand Author (for My Requests) and the assignee field (for Assigned to Me)
-    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$select=*,Author/Id,Author/Title,Author/EMail,${ASSIGNEE_FIELD}/Id,${ASSIGNEE_FIELD}/Title,${ASSIGNEE_FIELD}/EMail&$expand=Author,${ASSIGNEE_FIELD}`;
+    // Step 1: Fetch current SP user profile (gives us the exact email SP stores for this user)
+    if (!currentSPUser) {
+      try {
+        const spU = await spFetch(`${SP_M}/_api/web/currentUser`);
+        if (spU && (spU.Email||spU.Title)) {
+          currentSPUser = {
+            email: (spU.Email||'').toLowerCase().trim(),
+            name:  (spU.Title||'').toLowerCase().trim(),
+            id:    spU.Id || null
+          };
+        }
+      } catch(eu) { /* non-critical */ }
+    }
+    // Step 2: Fetch maintenance items — plain $expand (no $select=* which breaks on many tenants)
+    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,${ASSIGNEE_FIELD}`;
     let maint;
     try {
       maint = await spFetch(baseM);
     } catch(e) {
-      // Fallback: try without $select (some SP versions don't support mixed $select/$expand)
-      const baseM2 = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,${ASSIGNEE_FIELD}`;
-      try { maint = await spFetch(baseM2); }
-      catch(e2){
-        const baseM3 = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`;
-        maint = await spFetch(baseM3);
-      }
+      // fallback: no expand at all
+      maint = await spFetch(`${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`);
     }
     const fin = await spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`);
     allRequests = maint;
@@ -1204,18 +1213,19 @@ function assigneeList(i){
 function assigneeNames(i){ return assigneeList(i).map(a=>a.Title||a.DisplayName||a.Name||a.LookupValue).filter(Boolean); }
 function isAssignedToMe(i){
   if(!currentUser) return false;
-  const me = (currentUser.email||'').toLowerCase().trim();
-  const meName = (currentUser.name||'').toLowerCase().trim();
+  const spEmail = currentSPUser?.email || '';
+  const spId    = currentSPUser?.id    || null;
+  const meEmail = (currentUser.email||'').toLowerCase().trim();
+  const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
   const list = assigneeList(i);
   if(!list.length) return false;
   return list.some(a => {
     const em = personEmail(a);
     const nm = personName(a);
-    // Match by email (preferred) or by display name as fallback
-    if(em && me && em === me) return true;
-    if(nm && meName && nm === meName) return true;
-    // Also check if current user email is contained in loginName style strings
-    if(em && me && em.includes(me)) return true;
+    if(spId    && a.Id && a.Id === spId) return true;      // SP user ID match (most reliable)
+    if(spEmail && em   && em === spEmail) return true;     // SP profile email
+    if(meEmail && em   && em === meEmail) return true;     // MSAL UPN
+    if(meName  && nm   && nm === meName) return true;      // display name fallback
     return false;
   });
 }
@@ -1227,13 +1237,17 @@ function authorName(i){
 function authorEmail(i){ return personEmail(i.Author||{}); }
 function isMine(i){
   if(!currentUser) return false;
-  const me = (currentUser.email||'').toLowerCase().trim();
-  const meName = (currentUser.name||'').toLowerCase().trim();
+  const spEmail = currentSPUser?.email || '';
+  const spId    = currentSPUser?.id    || null;
+  const meEmail = (currentUser.email||'').toLowerCase().trim();
+  const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
+  const authorId = i.Author?.Id || null;
   const em = authorEmail(i);
   const nm = (authorName(i)||'').toLowerCase().trim();
-  if(em && me && em === me) return true;
-  if(em && me && em.includes(me)) return true;
-  if(nm && meName && nm === meName) return true;
+  if(spId    && authorId && authorId === spId) return true;  // SP user ID (most reliable)
+  if(spEmail && em       && em === spEmail) return true;     // SP profile email
+  if(meEmail && em       && em === meEmail) return true;     // MSAL UPN
+  if(meName  && nm       && nm === meName) return true;      // display name fallback
   return false;
 }
 function viewBtn(id) {
@@ -1367,7 +1381,7 @@ function renderMyRequests() {
       <td style="color:var(--muted);font-size:12px">${formatDate(i.Created)}</td>
       <td>${viewBtn(i.ID)}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5 5h14l3 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></svg></div>${currentLang==='ar'?'لا توجد طلبات بعد':'No requests yet'}</div></td></tr>`;
+  }).join('') || `<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5 5h14l3 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></svg></div>${currentLang==='ar'?'لا توجد طلبات بعد':'No requests yet'}<br><span style="font-size:10px;opacity:0.4;font-family:monospace">${currentSPUser?.email||currentUser?.email||''}</span></div></td></tr>`;
 }
 
 // ============ ASSIGNED ============
@@ -1393,7 +1407,7 @@ function renderAssigned() {
           ${viewBtn(i.ID)}
         </div>
       </td>
-    </tr>`).join('') || `<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg></div>${currentLang==='ar'?'لا توجد مهام مسندة إليك':'Nothing assigned to you'}</div></td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="8"><div class="empty"><div class="empty-icon"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4 4 0 0 0 5.6-5.6l-2.9 2.9-2-2 2.9-2.9Z"/></svg></div>${currentLang==='ar'?'لا توجد مهام مسندة إليك':'Nothing assigned to you'}<br><span style="font-size:10px;opacity:0.4;font-family:monospace">${currentSPUser?.email||currentUser?.email||''}</span></div></td></tr>`;
 }
 
 // ============ FINANCE ============
