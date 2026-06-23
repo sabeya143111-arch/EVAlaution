@@ -1128,7 +1128,7 @@ async function loadAll() {
     }
     // Step 2: Fetch maintenance items — plain $expand (no $select=* which breaks on many tenants)
     // Try multiple expand strategies for assignee
-    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,OData__x0627__x0644__x0645__x0648__x06,FieldValuesAsText`;
+    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,OData__x0627__x0644__x0645__x0648__x06`;
     let maint;
     try {
       maint = await spFetch(baseM);
