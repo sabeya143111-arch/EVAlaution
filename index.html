@@ -1106,19 +1106,18 @@ async function spFetch(url) {
   const d = await r.json();
   return d.d.results || d.d;
 }
-
-async function loadAll() {
-  try {
-    document.getElementById('live-time').textContent = currentLang==='ar'?'جارٍ المزامنة...':'Syncing...';
-    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`;
+const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`;
+    const sel = `*,Author/Title,Author/EMail,${ASSIGNEE_FIELD}/Title,${ASSIGNEE_FIELD}/EMail`;
     let maint;
     try {
-      maint = await spFetch(`${baseM}&$expand=Author,${ASSIGNEE_FIELD}`);
+      maint = await spFetch(`${baseM}&$select=${sel}&$expand=Author,${ASSIGNEE_FIELD}`);
     } catch(e) {
-      try { maint = await spFetch(`${baseM}&$expand=${ASSIGNEE_FIELD}`); }
+      try { maint = await spFetch(`${baseM}&$select=*,Author/Title,Author/EMail&$expand=Author`); }
       catch(e2){ maint = await spFetch(baseM); }
     }
-    const fin = await spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`);
+
+  
+  const fin = await spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`);
     allRequests = maint;
     allFinance = fin;
     // new-request alert
