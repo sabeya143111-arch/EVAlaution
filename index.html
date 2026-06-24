@@ -1126,15 +1126,22 @@ async function loadAll() {
         }
       } catch(eu) { /* non-critical */ }
     }
-    // Step 2: Fetch maintenance items — plain $expand (no $select=* which breaks on many tenants)
-    // Try multiple expand strategies for assignee
-    const baseM = `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500&$expand=Author,OData__x0627__x0644__x0645__x0648__x06`;
-    let maint;
+    // Step 2: Fetch maintenance items — STAGED $expand so one bad field can't kill the whole query.
+    // Author is always expandable; the assignee field may be text/choice (NOT expandable) and 400s.
+    const itemsUrl = (expand) =>
+      `${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500${expand?('&$expand='+expand):''}`;
+    let maint, expandUsed = 'none';
     try {
-      maint = await spFetch(baseM);
-    } catch(e) {
-      // fallback: no expand at all
-      maint = await spFetch(`${SP_M}/_api/web/lists/getById('${LIST_M}')/items?$orderby=ID desc&$top=500`);
+      // Best case: assignee is a people field → expand both
+      maint = await spFetch(itemsUrl(`Author,${ASSIGNEE_FIELD}`)); expandUsed = 'Author+assignee';
+    } catch(e1) {
+      try {
+        // Most common: assignee not expandable → keep Author expanded (fixes My Requests), read assignee raw
+        maint = await spFetch(itemsUrl('Author')); expandUsed = 'Author only';
+      } catch(e2) {
+        // Last resort: no expand at all
+        maint = await spFetch(itemsUrl('')); expandUsed = 'none';
+      }
     }
     const fin = await spFetch(`${SP_F}/_api/web/lists/getById('${LIST_F}')/items?$orderby=ID desc&$top=200`);
     allRequests = maint;
@@ -1144,10 +1151,12 @@ async function loadAll() {
     if(currentSPUser) {
       console.log('SP User loaded:', currentSPUser);
       console.log('MSAL User:', currentUser?.email);
-      // Check first item assignees
+      console.log('Expand strategy used:', expandUsed);
       if(maint.length > 0) {
+        console.log('Sample Author:', maint[0].Author);
+        console.log('Sample raw assignee value:', maint[0][ASSIGNEE_FIELD]);
         const firstAssigned = maint.find(i => assigneeList(i).length > 0);
-        if(firstAssigned) console.log('Sample assignee data:', assigneeList(firstAssigned));
+        if(firstAssigned) console.log('Sample assignee (parsed):', assigneeList(firstAssigned));
       }
     }
     const maxId = maint.reduce((m,i)=>Math.max(m, i.ID||0), 0);
@@ -1229,18 +1238,32 @@ function isAssignedToMe(i){
   const spId    = currentSPUser?.id    || null;
   const meEmail = (currentUser.email||'').toLowerCase().trim();
   const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
+  const meFirst = (meName.split(' ')[0]||'');
   const list = assigneeList(i);
-  if(!list.length) return false;
-  return list.some(a => {
-    const em = personEmail(a);
-    const nm = personName(a);
-    if(spId    && a.Id && String(a.Id) === String(spId)) return true;
-    if(spEmail && em   && em === spEmail) return true;
-    if(meEmail && em   && em === meEmail) return true;
-    if(meEmail && em   && meEmail.split('@')[0] === em.split('@')[0]) return true;
-    if(meName  && nm   && nm === meName) return true;
-    return false;
-  });
+  // Case A: assignee is a people/lookup field (expanded objects)
+  if(list.length){
+    const hit = list.some(a => {
+      const em = personEmail(a);
+      const nm = personName(a);
+      if(spId    && a.Id && String(a.Id) === String(spId)) return true;
+      if(spEmail && em   && em === spEmail) return true;
+      if(meEmail && em   && em === meEmail) return true;
+      if(meEmail && em   && meEmail.split('@')[0] === em.split('@')[0]) return true;
+      if(meName  && nm   && nm === meName) return true;
+      return false;
+    });
+    if(hit) return true;
+  }
+  // Case B: assignee is a plain text/choice field (e.g. "طارق محمود")
+  const raw = i[ASSIGNEE_FIELD];
+  if(typeof raw === 'string' && raw.trim()){
+    const v = raw.toLowerCase();
+    if(meName  && v.includes(meName)) return true;
+    if(meEmail && v.includes(meEmail)) return true;
+    if(meEmail && v.includes(meEmail.split('@')[0])) return true;
+    if(meFirst && meFirst.length > 1 && v.includes(meFirst)) return true;
+  }
+  return false;
 }
 function authorName(i){
   const a = i.Author;
