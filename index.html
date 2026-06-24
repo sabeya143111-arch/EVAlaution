@@ -1153,10 +1153,11 @@ async function loadAll() {
       console.log('MSAL User:', currentUser?.email);
       console.log('Expand strategy used:', expandUsed);
       if(maint.length > 0) {
+        console.log('Item keys:', Object.keys(maint[0]));
+        console.log('AuthorId:', maint[0].AuthorId, '| my SP id:', currentSPUser?.id);
+        console.log('Assignee id field ('+ASSIGNEE_ID_FIELD+'):', maint[0][ASSIGNEE_ID_FIELD]);
         console.log('Sample Author:', maint[0].Author);
         console.log('Sample raw assignee value:', maint[0][ASSIGNEE_FIELD]);
-        const firstAssigned = maint.find(i => assigneeList(i).length > 0);
-        if(firstAssigned) console.log('Sample assignee (parsed):', assigneeList(firstAssigned));
       }
     }
     const maxId = maint.reduce((m,i)=>Math.max(m, i.ID||0), 0);
@@ -1209,6 +1210,8 @@ function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 
 // ============ PEOPLE FIELD HELPERS ============
 const ASSIGNEE_FIELD = 'OData__x0627__x0644__x0645__x0648__x06';
+// When a people field is NOT expanded, SP returns its numeric id(s) under "<field>Id"
+const ASSIGNEE_ID_FIELD = ASSIGNEE_FIELD + 'Id';
 function asArr(v){
   if(!v) return [];
   if(Array.isArray(v)) return v;
@@ -1239,6 +1242,13 @@ function isAssignedToMe(i){
   const meEmail = (currentUser.email||'').toLowerCase().trim();
   const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
   const meFirst = (meName.split(' ')[0]||'');
+  // Case 0: people field NOT expanded → SP returns the numeric id companion "<field>Id"
+  const aid = i[ASSIGNEE_ID_FIELD];
+  if(spId!=null && aid!=null){
+    if(aid && typeof aid==='object' && Array.isArray(aid.results)){
+      if(aid.results.map(String).includes(String(spId))) return true;
+    } else if(String(aid)===String(spId)) return true;
+  }
   const list = assigneeList(i);
   // Case A: assignee is a people/lookup field (expanded objects)
   if(list.length){
@@ -1277,14 +1287,12 @@ function isMine(i){
   const spId    = currentSPUser?.id    || null;
   const meEmail = (currentUser.email||'').toLowerCase().trim();
   const meName  = (currentSPUser?.name || currentUser.name||'').toLowerCase().trim();
-  const authorId = i.Author?.Id || null;
+  // AuthorId is a plain field present WITHOUT $expand — this is the reliable match
+  const authorId = (i.AuthorId ?? i.Author?.Id) ?? null;
   const em = authorEmail(i);
   const nm = (authorName(i)||'').toLowerCase().trim();
-  
-  // Debug: uncomment to troubleshoot
-  // console.log('isMine check:', {spEmail, spId, meEmail, meName, em, nm, authorId});
-  
-  if(spId    && authorId && String(authorId) === String(spId)) return true;
+
+  if(spId    && authorId!=null && String(authorId) === String(spId)) return true;
   if(spEmail && em       && em === spEmail) return true;
   if(meEmail && em       && em === meEmail) return true;
   // Also try matching first part of email (before @)
