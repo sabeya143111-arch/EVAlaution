@@ -1049,7 +1049,7 @@ async function initMsal() {
   });
 }
 
-const SCOPES = ['https://netorg20570594.sharepoint.com/AllSites.Read', 'User.Read'];
+const SCOPES = ['https://netorg20570594.sharepoint.com/AllSites.Write', 'User.Read'];
 
 async function signIn() {
   try { await msalInstance.loginRedirect({ scopes: SCOPES, redirectUri: 'https://ev-alaution.vercel.app/' }); }
@@ -1075,6 +1075,7 @@ function nameHover(on) {
 }
 function setUser(account, token) {
   currentUser = { name: account.name, email: account.username };
+  currentSPUser = null; // is user ka SP profile dobara fetch hoga
   accessToken = token;
   document.getElementById('user-name').textContent = currentUser.name;
   const bigName = document.getElementById('user-name-big');
@@ -1084,17 +1085,23 @@ function setUser(account, token) {
 }
 async function getToken() {
   try {
-    const accounts = msalInstance.getAllAccounts();
-    if (!accounts.length) return;
-    const result = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+    const acct = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+    if (!acct) return;
+    const result = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account: acct });
     accessToken = result.accessToken;
-    if (!currentUser) setUser(accounts[0], accessToken);
+    if (!currentUser) setUser(acct, accessToken);
   } catch(e) { await msalInstance.acquireTokenRedirect({ scopes: SCOPES }); }
 }
-function signOut() {
-  msalInstance.logoutPopup();
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('dashboard').style.display = 'none';
+async function signOut() {
+  // sab kuch wipe — taaki agla user purani session inherit na kare
+  currentUser = null; currentSPUser = null; accessToken = null;
+  allRequests = []; allFinance = []; lastMaxId = null;
+  try { finSel.clear(); } catch(e){}
+  try { sessionStorage.clear(); } catch(e){}
+  try {
+    const acct = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+    await msalInstance.logoutRedirect({ account: acct, postLogoutRedirectUri: window.location.origin + window.location.pathname });
+  } catch(e) { location.reload(); }
 }
 function showDashboard() {
   document.getElementById('login-screen').style.display = 'none';
@@ -1721,12 +1728,15 @@ async function submitNewRequest() {
   btn.disabled=true; btn.textContent=currentLang==='ar'?'جارٍ الإرسال...':'Submitting...';
   try {
     await getToken();
+    // entity type dynamically — hardcode mismatch se bachne ke liye
+    let entityType = "SP.Data.IT_x0020_Support_x0020__x0020_ListListItem";
+    try { const et = await spFetch(`${SP_M}/_api/web/lists/getById('${LIST_M}')?$select=ListItemEntityTypeFullName`); if(et?.ListItemEntityTypeFullName) entityType = et.ListItemEntityTypeFullName; } catch(e){}
     const digestR = await fetch(`${SP_M}/_api/contextinfo`,{method:'POST',headers:{'Accept':'application/json;odata=verbose','Authorization':`Bearer ${accessToken}`}});
     const digestD = await digestR.json();
     const digest = digestD.d.GetContextWebInformation.FormDigestValue;
     const branchField = company.includes('سواج') ? 'OData__x0627__x062e__x062a__x0631__x06' : company.includes('لاروش') ? 'LaRoche' : 'Gold';
     const body = {
-      "__metadata":{"type":"SP.Data.IT_x0020_Support_x0020__x0020_ListListItem"},
+      "__metadata":{"type":entityType},
       "OData__x0646__x0648__x0639__x0627__x06": category,
       "OData__x0627__x062e__x0628__x0631__x06": detail,
       "OData__x062d__x0627__x0644__x0629__x06": "في الانتظار - Waiting list",
@@ -1737,6 +1747,12 @@ async function submitNewRequest() {
       headers:{'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose','Authorization':`Bearer ${accessToken}`,'X-RequestDigest':digest},
       body:JSON.stringify(body)
     });
+    if(!r.ok){
+      let msg = `HTTP ${r.status}`;
+      try { const err = await r.json(); msg = err?.error?.message?.value || msg; } catch(e){}
+      toast((currentLang==='ar'?'فشل الإرسال: ':'Submit failed: ')+msg, 'error');
+      return;
+    }
     const d = await r.json();
     if(d.d?.ID) {
       toast(`<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> ${currentLang==='ar'?'تم إرسال الطلب':'Request'} #${d.d.ID} ${currentLang==='ar'?'':'submitted!'}`, 'success');
@@ -1995,9 +2011,9 @@ window.onload = async () => {
   if(!msalInstance) return;
   await msalInstance.initialize();
   const response = await msalInstance.handleRedirectPromise();
-  if(response?.account) { setUser(response.account, response.accessToken); showDashboard(); await getToken(); loadAll(); return; }
+  if(response?.account) { msalInstance.setActiveAccount(response.account); setUser(response.account, response.accessToken); showDashboard(); await getToken(); loadAll(); return; }
   const accounts = msalInstance.getAllAccounts();
-  if(accounts.length > 0) { try { await getToken(); showDashboard(); loadAll(); } catch(e) {} }
+  if(accounts.length > 0) { msalInstance.setActiveAccount(accounts[0]); try { await getToken(); showDashboard(); loadAll(); } catch(e) {} }
   setInterval(() => { const tm = document.getElementById('live-time'); if(tm && !tm.textContent.includes('Sync') && !tm.textContent.includes('مزامنة')) tm.textContent = new Date().toLocaleTimeString(currentLang==='ar'?'ar-SA':'en-GB',{hour:'2-digit',minute:'2-digit'}); }, 60000);
 };
 setInterval(loadAll, 120000);
